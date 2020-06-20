@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from setuptools import setup, find_packages
 
 setup(
@@ -19,6 +22,9 @@ setup(
     install_requires=[
                     'xtgeo',
                     ],
-    python_requires=">=3.7",
-    packages=find_packages("src")
+    python_requires=">=3.4",
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    include_package_data=True,
+    zip_safe=False,
 )
