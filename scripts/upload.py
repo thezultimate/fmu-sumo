@@ -27,7 +27,7 @@ def main():
         e.add_files(os.path.join(args.casepath, subfolder))
     
         print('\nuploading files')
-        e.upload(threads=1)
+        e.upload(threads=4)
 
 
 

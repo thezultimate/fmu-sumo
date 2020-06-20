@@ -1,3 +1,4 @@
+
 def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
     """
     Upload files, including JSON/manifest, to specified ensemble
@@ -7,6 +8,9 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
 
     Upload is kept outside classes to use multithreading.
     """
+    
+    import time
+    from concurrent.futures import ThreadPoolExecutor
 
     def _upload_files(files, api, sumo_parent_id, threads=4):
         with ThreadPoolExecutor(threads) as executor:

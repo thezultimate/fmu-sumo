@@ -3,7 +3,7 @@ import glob
 import yaml
 from fmu.sumo._fileondisk import FileOnDisk
 from fmu.sumo._connection import SumoConnection
-from fmu.sumo._uploadfiles import UPLOAD_FILES
+from fmu.sumo._upload_files import UPLOAD_FILES
 
 class EnsembleOnDisk:
     """
@@ -127,26 +127,23 @@ class EnsembleOnDisk:
         print('this fmu_ensemble_id:')
         print(self.fmu_ensemble_id)
 
-        # search for this fmu-ensemble-id on Sumo
-        # get_ensemble_by_fmu_id or something like that
+        query = f'fmu_ensemble_id:{self.fmu_ensemble_id}'
+        search_results = self.api.searchroot(query, select='source', buckets='source')
 
+        hits = search_results.get('hits').get('hits')
 
-
-        return
-
-
-        if len(matches) == 0:
+        if len(hits) == 0:
             print('No matching ensembles found on Sumo --> Not registered on Sumo')
             print('Registering ensemble on Sumo')
             sumo_parent_id = self._upload_manifest(self.manifest)
             print('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
             return sumo_parent_id
 
-        if len(matches) == 1:
+        if len(hits) == 1:
             print('Found one matching ensemble on Sumo --> Registered on Sumo')
-            return matches[0]
+            return hits[0].get('_id')
 
-        raise DuplicateSumoEnsemblesError(f'Found {len(matches)} ensembles with the same ID on Sumo')
+        raise DuplicateSumoEnsemblesError(f'Found {len(hits)} ensembles with the same ID on Sumo')
 
     def _upload_manifest(self, manifest:dict):
         """Given a manifest dict, upload it to Sumo"""
@@ -171,12 +168,12 @@ class EnsembleOnDisk:
         fmu_ensemble_id = self.manifest.get('fmu_ensemble_id')
         return fmu_ensemble_id
 
-    def upload(self, upload_files=True, threads=4):
-        """Trigger upload of ensemble"""
+    def upload(self, threads=4):
+        """Trigger upload of files in this ensemble"""
         if self._sumo_parent_id is None:
             self._sumo_parent_id = self._get_sumo_parent_id()
 
-        if upload_files:
-            upload_response = UPLOAD_FILES(files=self.files, sumo_parent_id=self._sumo_parent_id, api=self.api, threads=threads)
-
+        upload_response = UPLOAD_FILES(files=self.files, sumo_parent_id=self._sumo_parent_id, api=self.api, threads=threads)
         print(f'Uploaded {len(self.files)} in {upload_response.get("time_elapsed")} seconds')
+
+        print('upload done')
