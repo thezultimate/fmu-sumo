@@ -3,8 +3,17 @@ from sumo.wrapper import CallSumoApi
 class SumoConnection:
     """Object to hold authentication towards Sumo"""
 
-    def __init__(self):
+    def __init__(self, env=None):
         self._api = None
+        self._env = env
+
+        print('Connection to Sumo on environment: {}'.format(self.env))
+
+    @property
+    def env(self):
+        if self._env is None:
+            self._env = 'dev'
+        return self._env
 
     @property
     def api(self):
@@ -24,7 +33,7 @@ class SumoConnection:
         """Establish the connection with Sumo API, take user through 2FA."""
 
         print('establish connection')
-        api = CallSumoApi()
+        api = CallSumoApi(env=self.env)
         api.get_bear_token()
 
         print('done')

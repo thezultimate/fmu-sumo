@@ -10,13 +10,10 @@ class EnsembleOnDisk:
     Class to hold information about an ERT run on disk.
     """
 
-    def __init__(self, manifest_path:str, api=None):
+    def __init__(self, manifest_path:str, sumo_connection):
         """
         manifest_path (str): Path to manifest for ensemble
-        api (SumoConnection instance): Connection to Sumo. Will be established
-                                       if needed, and not passed. Pass the api
-                                       to avoid multiple authentications if this
-                                       class is used in a script.
+        api (SumoConnection instance): Connection to Sumo.
         """
 
         print('INIT EnsembleOnDisk')
@@ -24,7 +21,7 @@ class EnsembleOnDisk:
         self._manifest = self._load_manifest(manifest_path)
         self._fmu_ensemble_id = None
         self._files = []
-        self._api = api
+        self.sumo_connection = sumo_connection
         self._sumo_parent_id = None
         self._on_sumo = None
 
@@ -48,13 +45,6 @@ class EnsembleOnDisk:
         if self._on_sumo is None:
             self.find_ensemble_on_sumo()
         return self._on_sumo            
-
-    @property
-    def api(self):
-        if self._api is None:
-            _A = SumoConnection()
-            self._api = _A.api
-        return self._api
 
     @property
     def manifest(self):
@@ -87,7 +77,7 @@ class EnsembleOnDisk:
         Criteria for ensemble identified on Sumo: fmu_ensemble_id
         """
 
-        ensembles_on_sumo = [e for e in EnsemblesOnSumo(api=self.api).ensembles]
+        ensembles_on_sumo = [e for e in EnsemblesOnSumo(sumo_connection=self.sumo_connection).ensembles]
 
         for ensemble_on_sumo in ensembles_on_sumo:
             if self.fmu_ensemble_id == ensemble_on_sumo.fmu_ensemble_id:
@@ -127,8 +117,8 @@ class EnsembleOnDisk:
         print('this fmu_ensemble_id:')
         print(self.fmu_ensemble_id)
 
-        query = f'fmu_ensemble_id:{self.fmu_ensemble_id}'
-        search_results = self.api.searchroot(query, select='source', buckets='source')
+        query = f'fmu_ensemble.fmu_ensemble_id:{self.fmu_ensemble_id}'
+        search_results = self.sumo_connection.api.searchroot(query, select='source', buckets='source')
 
         hits = search_results.get('hits').get('hits')
 
@@ -148,7 +138,7 @@ class EnsembleOnDisk:
     def _upload_manifest(self, manifest:dict):
         """Given a manifest dict, upload it to Sumo"""
         print('UPLOAD MANIFEST')
-        response = self.api.save_top_level_json(json=manifest)
+        response = self.sumo_connection.api.save_top_level_json(json=manifest)
         returned_object_id = response.text
         return returned_object_id
 
@@ -165,7 +155,7 @@ class EnsembleOnDisk:
 
     def _get_fmu_ensemble_id(self):
         """Look up and return ensemble_id from manifest"""
-        fmu_ensemble_id = self.manifest.get('fmu_ensemble_id')
+        fmu_ensemble_id = self.manifest.get('fmu_ensemble').get('fmu_ensemble_id')
         return fmu_ensemble_id
 
     def upload(self, threads=4):
@@ -173,7 +163,7 @@ class EnsembleOnDisk:
         if self._sumo_parent_id is None:
             self._sumo_parent_id = self._get_sumo_parent_id()
 
-        upload_response = UPLOAD_FILES(files=self.files, sumo_parent_id=self._sumo_parent_id, api=self.api, threads=threads)
+        upload_response = UPLOAD_FILES(files=self.files, sumo_parent_id=self._sumo_parent_id, sumo_connection=self.sumo_connection, threads=threads)
         print(f'Uploaded {len(self.files)} in {upload_response.get("time_elapsed")} seconds')
 
         print('upload done')

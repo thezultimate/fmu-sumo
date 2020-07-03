@@ -1,5 +1,5 @@
 
-def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
+def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
     """
     Upload files, including JSON/manifest, to specified ensemble
 
@@ -12,16 +12,38 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
     import time
     from concurrent.futures import ThreadPoolExecutor
 
-    def _upload_files(files, api, sumo_parent_id, threads=4):
+    def _upload_files(files, sumo_connection, sumo_parent_id, threads=4):
         with ThreadPoolExecutor(threads) as executor:
-            results = executor.map(_upload_file, [(file, api, sumo_parent_id) for file in files])
+            results = executor.map(_upload_file, [(file, sumo_connection, sumo_parent_id) for file in files])
         return results
 
     def _upload_file(arg):
-        file, api, sumo_parent_id = arg
-        result = file.upload_to_sumo(api=api, sumo_parent_id=sumo_parent_id)
+        file, sumo_connection, sumo_parent_id = arg
+        result = file.upload_to_sumo(sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id)
         result['file'] = file
         return result
+
+    def _print_upload_result(result):
+        file = result.get('file')
+        response = result.get('response')
+
+        json_status_code = result.get('response').get('metadata').status_code
+        json_response_text = result.get('response').get('metadata').text
+
+        if result.get('response').get('blob'):
+            blob_status_code = result.get('response').get('blob').status_code
+        else:
+            blob_status_code = None
+
+        if result.get('response').get('blob'):
+            blob_response_text = result.get('response').get('blob').text
+        else:
+            blob_response_text = None
+
+
+        print(f"{file.filepath_relative_to_case_root}:")
+        print(f"JSON: [{json_status_code}] {json_response_text}")
+        print(f"Blob: [{blob_status_code}] {blob_response_text}\n")
 
     def _summary(ok_uploads, to_file='upload_log.txt'):
         #print('Total time spent: {} seconds'.format(_dt))
@@ -51,9 +73,10 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
     _t0 = time.perf_counter()
 
     print(f'UPLOADING {len(files)} files with {threads} threads.')
+    print(f'Environment is {sumo_connection.env}')
 
     # first attempt
-    results = _upload_files(files=files, api=api, sumo_parent_id=sumo_parent_id, threads=threads)
+    results = _upload_files(files=files, sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id, threads=threads)
 
     ok_uploads = []
     failed_uploads = []
@@ -79,18 +102,24 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
 
     if not ok_uploads:
         print('\nALL FILES FAILED')
+        print('\nNot trying again.')
+        return {'elements' : [s.basename for s in files],
+                'sumo_parent_id' : sumo_parent_id,
+                'count' : len(files),
+                'time_start' : _t0,
+                'time_end' : _t1,
+                'time_elapsed' : _dt,}
     else:
         if failed_uploads:
             print('\nSome uploads failed:')
 
     for result in failed_uploads:
-        file = result.get('file')
-        response = result.get('response')
-        print(f'{file.filepath_relative_to_case_root}: {response}')
+        _print_upload_result(result)
 
+    # second attempt
     print('\nRetrying {} failed uploads.'.format(len(failed_uploads)))
     failed_files = [result.get('file') for result in failed_uploads]
-    results = _upload_files(files=failed_files, api=api, sumo_parent_id=sumo_parent_id, threads=threads)
+    results = _upload_files(files=failed_files, sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id, threads=threads)
     _t1 = time.perf_counter()
     _dt = _t1-_t0
 
@@ -105,9 +134,7 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
     if failed_uploads:
         print('Uploads still failed after second attempt:')
         for result in failed_uploads:
-            file = result.get('file')
-            response = result.get('response')
-            print(f'{file.filepath_relative_to_case_root}: {response}')
+            _print_upload_result(result)
     else:
         print('After second attempt, all uploads are OK. Summary:')
         _summary(ok_uploads)
@@ -119,9 +146,10 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
                 'time_end' : _t1,
                 'time_elapsed' : _dt,}
 
+    # third attemp
     print('\nRetrying {} failed uploads.'.format(len(failed_uploads)))
     failed_files = [result.get('file') for result in failed_uploads]
-    results = _upload_files(files=failed_files, api=api, sumo_parent_id=sumo_parent_id, threads=threads)
+    results = _upload_files(files=failed_files, sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id, threads=threads)
     _t1 = time.perf_counter()
     _dt = _t1-_t0
 
@@ -136,13 +164,11 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, api=None, threads=4):
     if failed_uploads:
         print('{} uploads still failed after third attempt:'.format(len(failed_uploads)))
         for result in failed_uploads:
-            file = result.get('file')
-            response = result.get('response')
-            print(f'{file.filepath_relative_to_case_root}: {response}')
+            _print_upload_result(result)
 
         print('\n\n=========== NO MORE ATTEMPTS MADE =========')
     else:
-        print('After second attempt, all uploads are OK. Summary:')
+        print('After third attempt, all uploads are OK. Summary:')
         _summary(ok_uploads)
 
     return {'elements' : [s.basename for s in files],

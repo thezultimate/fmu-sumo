@@ -31,7 +31,7 @@ class FileOnDisk:
         self._fformat = None
 
         self._metadata['datetime'] = self._datetime_now()
-        self._metadata['id'] = self._id_block()
+        #self._metadata['id'] = self._id_block()
         self._metadata['data']['relative_file_path'] = self.filepath_relative_to_case_root
 
     def __repr__(self):
@@ -109,17 +109,17 @@ class FileOnDisk:
     def bytestring(self):
         return self._bytestring
 
-    def _id_block(self):
-        """Create the id block to the metadata"""
-        
-        if self.dtype == 'surface':
-            ids = ["data.relative_file_path", "fmu_ensemble_id"]
-        elif self.dtype == 'polygons':
-            ids = ["data.relative_file_path", "fmu_ensemble_id"]
-        else:
-            raise ValueError('Unknown data type: {}'.format(type))
-
-        return ids
+#    def _id_block(self):
+#        """Create the id block to the metadata"""
+#        
+#        if self.dtype == 'surface':
+#            ids = ["data.relative_file_path", "fmu_ensemble_id"]
+#        elif self.dtype == 'polygons':
+#            ids = ["data.relative_file_path", "fmu_ensemble_id"]
+#        else:
+#            raise ValueError('Unknown data type: {}'.format(dtype))
+#
+#        return ids
 
     def _datetime_now(self):
         """Return datetime now on FMU standard format"""
@@ -127,14 +127,14 @@ class FileOnDisk:
 
     def _get_filepath_relative_to_case_root(self):
         """Derive the local filepath from the absolute path"""
-        casename = self.metadata.get('case')
+        casename = self._get_casename()
         if casename not in self.path:
             raise IOError('Could not find casename in filepath')
         return self.path.split(casename)[-1][1:]
 
     def _get_casename(self):
         """Look up casename from metadata"""
-        casename = self.metadata.get('case')
+        casename = self.metadata.get('fmu_ensemble').get('case')
         if not casename:
             raise MetadataError('Could not get casename from metadata')
         return casename
@@ -142,7 +142,7 @@ class FileOnDisk:
     def _get_dtype(self):
         """Look up file format from metadata"""
 
-        dtype = self.metadata.get('data', {}).get('type')
+        dtype = self.metadata.get('class', {}).get('type')
 
         if dtype is None:
             #logging.error('Could not get file format from metadata')
@@ -195,23 +195,18 @@ class FileOnDisk:
 
         with open(path, 'rb') as f:
             bytestring = f.read()
-
         return bytestring
 
-    def _upload_metadata(self, api, sumo_parent_id):
-        response = api.save_child_level_json(json=self.metadata, object_id=sumo_parent_id)
+    def _upload_metadata(self, sumo_connection, sumo_parent_id):
+        response = sumo_connection.api.save_child_level_json(json=self.metadata, object_id=sumo_parent_id)
         return response
 
-    def _upload_bytestring(self, api):
-        response = api.save_blob(object_id=self.sumo_child_id, blob=self.bytestring)
+    def _upload_bytestring(self, sumo_connection):
+        response = sumo_connection.api.save_blob(object_id=self.sumo_child_id, blob=self.bytestring)
         return response
 
-    def upload_to_sumo(self, sumo_parent_id, api=None):
+    def upload_to_sumo(self, sumo_parent_id, sumo_connection):
         """Upload this file to Sumo"""
-
-        # what if sumo_parent_id does not exist on Sumo?
-
-        response = {}
 
         if not sumo_parent_id:
             return {'status': 'failed', 'response': 'Failed, sumo_parent_id passed to upload_to_sumo: {}'.format(sumo_parent_id)}
@@ -244,7 +239,7 @@ class FileOnDisk:
         _t0 = time.perf_counter()
 
         _t0_metadata = time.perf_counter()
-        response = self._upload_metadata(api=api, sumo_parent_id=sumo_parent_id)
+        response = self._upload_metadata(sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id)
         _t1_metadata = time.perf_counter()
         result['response']['metadata'] = response
         result['timing']['metadata'] = {'size' : None, 
@@ -257,7 +252,7 @@ class FileOnDisk:
         self._sumo_child_id = response.text
 
         _t0_blob = time.perf_counter()
-        response = self._upload_bytestring(api=api)
+        response = self._upload_bytestring(sumo_connection=sumo_connection)
         _t1_blob = time.perf_counter()
         result['response']['blob'] = response
         result['timing']['blob'] = {'size' : None, 
