@@ -45,6 +45,25 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
         print(f"JSON: [{json_status_code}] {json_response_text}")
         print(f"Blob: [{blob_status_code}] {blob_response_text}\n")
 
+    def _print_rejected_uploads(rejected_uploads):
+
+        print(f'\n\n{len(rejected_uploads)} files rejected by Sumo:')
+
+        for u in rejected_uploads:
+            print('\n'+'-'*50)
+
+            print(f"File: {u['file'].filepath_relative_to_case_root}")
+            metadata_response = u.get('response').get('metadata')
+            blob_response = u.get('response').get('blob')
+            print(f"Metadata: [{metadata_response.status_code}] {metadata_response.text}")
+
+            if blob_response:
+                print(f"Blob: [{blob_response.status_code}] {ublob_response.text}")
+
+            print('-'*50+'\n')
+
+
+
     def _summary(ok_uploads, to_file='upload_log.txt'):
         #print('Total time spent: {} seconds'.format(_dt))
 
@@ -70,22 +89,40 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
                     f.write(line)
 
 
-    _t0 = time.perf_counter()
-
     print(f'UPLOADING {len(files)} files with {threads} threads.')
     print(f'Environment is {sumo_connection.env}')
 
-    # first attempt
     results = _upload_files(files=files, sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id, threads=threads)
 
     ok_uploads = []
     failed_uploads = []
+    rejected_uploads = []
+
     for r in results:
         _status = r.get('status')
         if _status == 'ok':
             ok_uploads.append(r)
+        elif _status == 'rejected':
+            rejected_uploads.append(r)
         else:
             failed_uploads.append(r)
+
+    if not (len(ok_uploads)+len(failed_uploads)+len(rejected_uploads) == len(files)):
+        raise ValueError(f'Sum of ok_uploads ({len(ok_uploads)}, rejected_uploads ({len(rejected_uploads)}) ' \
+                         f'and failed_uploads ({len(failed_uploads)}) does not add up to ' \
+                         f'number of files total ({len(files)})' \
+                         )
+
+    return {'ok_uploads': ok_uploads, 'failed_uploads': failed_uploads, 'rejected_uploads': rejected_uploads}
+
+
+
+
+
+
+
+
+
 
     if not failed_uploads:
         _t1 = time.perf_counter()
@@ -93,9 +130,15 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
 
         print('\n==== UPLOAD DONE ====')
         _summary(ok_uploads)
+        if rejected_uploads:
+            _print_rejected_uploads(rejected_uploads)
+
         return {'elements' : [s.basename for s in files],
                 'sumo_parent_id' : sumo_parent_id,
-                'count' : len(files),
+                'count_total' : len(files),
+                'count_rejected': len(rejected_uploads),
+                'count_failed': len(failed_uploads),
+                'count_ok': len(ok_uploads),
                 'time_start' : _t0,
                 'time_end' : _t1,
                 'time_elapsed' : _dt,}
@@ -106,6 +149,10 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
         return {'elements' : [s.basename for s in files],
                 'sumo_parent_id' : sumo_parent_id,
                 'count' : len(files),
+                'count_total' : len(files),
+                'count_rejected': len(rejected_uploads),
+                'count_failed': len(failed_uploads),
+                'count_ok': len(ok_uploads),
                 'time_start' : _t0,
                 'time_end' : _t1,
                 'time_elapsed' : _dt,}
@@ -124,10 +171,13 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
     _dt = _t1-_t0
 
     failed_uploads = []
+
     for r in results:
         _status = r.get('status')
         if _status == 'ok':
             ok_uploads.append(r)
+        elif _status == 'rejected':
+            rejected_uploads.append(r)
         else:
             failed_uploads.append(r)
 
@@ -142,6 +192,10 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
         return {'elements' : [s.basename for s in files],
                 'sumo_parent_id' : sumo_parent_id,
                 'count' : len(files),
+                'count_total' : len(files),
+                'count_rejected': len(rejected_uploads),
+                'count_failed': len(failed_uploads),
+                'count_ok': len(ok_uploads),
                 'time_start' : _t0,
                 'time_end' : _t1,
                 'time_elapsed' : _dt,}
@@ -158,6 +212,8 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
         _status = r.get('status')
         if _status == 'ok':
             ok_uploads.append(r)
+        elif _status == 'rejected':
+            rejected_uploads.append(r)
         else:
             failed_uploads.append(r)
 
@@ -174,6 +230,10 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
     return {'elements' : [s.basename for s in files],
             'sumo_parent_id' : sumo_parent_id,
             'count' : len(files),
+            'count_total' : len(files),
+            'count_rejected': len(rejected_uploads),
+            'count_failed': len(failed_uploads),
+            'count_ok': len(ok_uploads),
             'time_start' : _t0,
             'time_end' : _t1,
             'time_elapsed' : _dt,}

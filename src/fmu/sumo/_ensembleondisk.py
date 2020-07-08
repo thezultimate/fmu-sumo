@@ -4,6 +4,7 @@ import yaml
 from fmu.sumo._fileondisk import FileOnDisk
 from fmu.sumo._connection import SumoConnection
 from fmu.sumo._upload_files import UPLOAD_FILES
+import time
 
 class EnsembleOnDisk:
     """
@@ -91,7 +92,7 @@ class EnsembleOnDisk:
     def add_files(self, searchstring):
         """Add files to the ensemble, based on searchstring"""
         file_paths = self._find_file_paths(searchstring)
-        self._files = []
+
         for file_path in file_paths:
             file = FileOnDisk(path=file_path)
             if file.metadata:
@@ -120,7 +121,19 @@ class EnsembleOnDisk:
         query = f'fmu_ensemble.fmu_ensemble_id:{self.fmu_ensemble_id}'
         search_results = self.sumo_connection.api.searchroot(query, select='source', buckets='source')
 
-        hits = search_results.get('hits').get('hits')
+        try:
+            hits = search_results.get('hits').get('hits')
+        except AttributeError:
+            if search_results.get('error').get('type') == 'index_not_found_exception':
+                # index not found, crazy rare exception. Index is empty.
+                sumo_parent_id = self._upload_manifest(self.manifest)
+                print('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
+                return sumo_parent_id
+
+        except Exception as error:
+            print('ERROR in hits. This is what the search results looked like:')
+            print(search_results)
+            raise error
 
         if len(hits) == 0:
             print('No matching ensembles found on Sumo --> Not registered on Sumo')
@@ -158,12 +171,101 @@ class EnsembleOnDisk:
         fmu_ensemble_id = self.manifest.get('fmu_ensemble').get('fmu_ensemble_id')
         return fmu_ensemble_id
 
-    def upload(self, threads=4):
+    def upload(self, threads=4, max_attempts=3):
         """Trigger upload of files in this ensemble"""
         if self._sumo_parent_id is None:
             self._sumo_parent_id = self._get_sumo_parent_id()
 
-        upload_response = UPLOAD_FILES(files=self.files, sumo_parent_id=self._sumo_parent_id, sumo_connection=self.sumo_connection, threads=threads)
-        print(f'Uploaded {len(self.files)} in {upload_response.get("time_elapsed")} seconds')
+        _t0 = time.perf_counter()
 
-        print('upload done')
+        upload_results = UPLOAD_FILES(files=self.files, sumo_parent_id=self._sumo_parent_id, sumo_connection=self.sumo_connection, threads=threads)
+
+        ok_uploads = upload_results.get('ok_uploads')
+        failed_uploads = upload_results.get('failed_uploads')
+        rejected_uploads = upload_results.get('rejected_uploads')
+
+        _dt = time.perf_counter() - _t0
+
+        if len(upload_results.get('ok_uploads')):
+            _avg_time_per_object = _dt/len(upload_results.get('ok_uploads'))
+        else:
+            _avg_time_per_object = None
+
+        print(f"Total: {len(self.files)}" \
+              f"\nOK: {len(upload_results.get('ok_uploads'))}" \
+              f"\nFailures: {len(upload_results.get('failed_uploads'))}" \
+              f"\nRejected: {len(upload_results.get('rejected_uploads'))}" \
+              f"\nWall time: {_dt} seconds" \
+              f"\nAvg per object: {_avg_time_per_object} seconds" \
+                )
+
+        if len(upload_results.get('failed_uploads')) > 0:
+            failures = True
+        else:
+            failures = False
+        
+        attempts = 0
+
+        while failures:
+            attempts += 1
+            print(f'Retrying {len(failed_uploads)} failures')
+
+            _t0 = time.perf_counter()
+            upload_results = UPLOAD_FILES(files=[f.get('file') for f in failed_uploads], 
+                                            sumo_parent_id=self._sumo_parent_id, 
+                                            sumo_connection=self.sumo_connection, 
+                                            threads=threads)
+
+            ok_uploads += upload_results.get('ok_uploads')  # append
+            rejected_uploads += upload_results.get('rejected_uploads')  # append
+            failed_uploads = upload_results.get('failed_uploads') # replace
+            _dt = time.perf_counter() - _t0
+
+            
+            if len(upload_results.get('ok_uploads')):
+                _avg_time_per_object = _dt/len(upload_results.get('ok_uploads'))
+            else:
+                _avg_time_per_object = None
+
+            print(f"Total: {len(failed_uploads)}" \
+                  f"\nOK: {len(upload_results.get('ok_uploads'))}" \
+                  f"\nFailures: {len(upload_results.get('failed_uploads'))}" \
+                  f"\nRejected: {len(upload_results.get('rejected_uploads'))}" \
+                  f"\nWall time: {_dt} seconds" \
+                  f"\nAvg per object: {_avg_time_per_object}" \
+                    )
+
+            if len(failed_uploads) == 0:
+                failures = False
+
+            if attempts >= max_attempts:
+                print('Stopping after {} attempts'.format(attempts))
+                break
+
+
+        print(f'Uploaded {len(ok_uploads)} files')
+
+        if failures:
+            print(f'{len(failed_uploads)} failed')
+
+        if len(rejected_uploads):
+            print(f'\n\n{len(rejected_uploads)} files rejected by Sumo:')
+
+            if len(rejected_uploads) > 10:
+                print('More than 5 rejected uploads. Printing first 5.')
+                rejected_uploads_selection = rejected_uploads[0:4]
+            else:
+                rejected_uploads_selection = rejected_uploads
+
+            for u in rejected_uploads_selection:
+                print('\n'+'-'*50)
+
+                print(f"File: {u['file'].filepath_relative_to_case_root}")
+                metadata_response = u.get('response').get('metadata')
+                blob_response = u.get('response').get('blob')
+                print(f"Metadata: [{metadata_response.status_code}] {metadata_response.text}")
+
+                if blob_response:
+                    print(f"Blob: [{blob_response.status_code}] {ublob_response.text}")
+
+                print('-'*50+'\n')

@@ -19,6 +19,7 @@ class FileOnDisk:
 
         self._metadata = self.get_metadata(self.metadata_path)
         self._bytestring = self.file_to_bytestring(path)
+        self._size = None
         self._path = path
         self._casename = None
         self._sumo_parent_id = None
@@ -72,6 +73,13 @@ class FileOnDisk:
         return self._path
 
     @property
+    def size(self):
+        """Size of the file"""
+        if self._size is None:
+            self._size = self._calculate_size(self.path)
+        return self._size
+
+    @property
     def casename(self):
         if self._casename is None:
             self._casename = self._get_casename()
@@ -109,17 +117,10 @@ class FileOnDisk:
     def bytestring(self):
         return self._bytestring
 
-#    def _id_block(self):
-#        """Create the id block to the metadata"""
-#        
-#        if self.dtype == 'surface':
-#            ids = ["data.relative_file_path", "fmu_ensemble_id"]
-#        elif self.dtype == 'polygons':
-#            ids = ["data.relative_file_path", "fmu_ensemble_id"]
-#        else:
-#            raise ValueError('Unknown data type: {}'.format(dtype))
-#
-#        return ids
+    def _calculate_size(self, path):
+        """calculate file size in bytes from path, return as int"""
+        return os.path.getsize(path)
+
 
     def _datetime_now(self):
         """Return datetime now on FMU standard format"""
@@ -201,61 +202,54 @@ class FileOnDisk:
         response = sumo_connection.api.save_child_level_json(json=self.metadata, object_id=sumo_parent_id)
         return response
 
-    def _upload_bytestring(self, sumo_connection):
-        response = sumo_connection.api.save_blob(object_id=self.sumo_child_id, blob=self.bytestring)
+    def _upload_bytestring(self, sumo_connection, url):
+        response = sumo_connection.api.save_blob(blob=self.bytestring, url=url)
         return response
 
     def upload_to_sumo(self, sumo_parent_id, sumo_connection):
         """Upload this file to Sumo"""
 
         if not sumo_parent_id:
-            return {'status': 'failed', 'response': 'Failed, sumo_parent_id passed to upload_to_sumo: {}'.format(sumo_parent_id)}
+            raise ValueError()
+            #return {'status': 'failed', 'response': 'Failed, sumo_parent_id passed to upload_to_sumo: {}'.format(sumo_parent_id)}
 
         # TODO: Do a check towards Sumo for confirming that ID is referring to existing ensemble
 
-        #print(f'  Uploading {self.filepath_relative_to_case_root}')
-        #print('  > metadata')
 
-        result = {'status': None,
-
-                  'response': {'metadata': None, 
-                               'blob': None},
-
-                  'timing': {'metadata': {'size': None,
-                                      'time_start' : None,
-                                      'time_end' : None,
-                                      'time_elapsed': None,
-                                      },
-
-                             'blob': {'size': None,
-                                      'time_start' : None,
-                                      'time_end' : None,
-                                      'time_elapsed': None,
-                                      },
-
-                             'total': None}
-                             }
-
+        # UPLOAD JSON
         _t0 = time.perf_counter()
-
         _t0_metadata = time.perf_counter()
+
+        result = {'timing': {},
+                  'response': {},
+                  'status': None}
+
         response = self._upload_metadata(sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id)
+
         _t1_metadata = time.perf_counter()
         result['response']['metadata'] = response
         result['timing']['metadata'] = {'size' : None, 
                                         'time_start': _t0_metadata, 
                                         'time_end': _t1_metadata, 
                                         'time_elapsed': _t1_metadata-_t0_metadata}
+
+        if response.status_code == 400:
+            result['status'] = 'rejected'
+            return result
+
         if not response.ok:
             result['status'] = 'failed'
             return result
-        self._sumo_child_id = response.text
 
+        self._sumo_child_id = response.json().get('objectid')
+        self._blob_url = response.json().get('blob_url')
+
+        # UPLOAD BLOB
         _t0_blob = time.perf_counter()
-        response = self._upload_bytestring(sumo_connection=sumo_connection)
+        response = self._upload_bytestring(sumo_connection=sumo_connection, url=self._blob_url)
         _t1_blob = time.perf_counter()
         result['response']['blob'] = response
-        result['timing']['blob'] = {'size' : None, 
+        result['timing']['blob'] = {'size' : self.size, 
                                         'time_start': _t0_blob, 
                                         'time_end': _t1_blob, 
                                         'time_elapsed': _t1_blob-_t0_blob}
@@ -263,7 +257,14 @@ class FileOnDisk:
         if not response.ok:
             result['status'] = 'failed'
             return result
-        self._sumo_child_id_blob = response.text
+
+        #if response.json() != 'Created':
+        #    raise ValueError('Unexpected response from Sumo on blob upload: {}'.format(response.json()))
+
+        if response.status_code != 201:
+            print(response)
+            result['status'] = 'failed'
+            return result
 
         _t1 = time.perf_counter()
         result['timing']['total'] = {'size' : None, 
