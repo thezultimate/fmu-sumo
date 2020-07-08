@@ -16,11 +16,15 @@ class SumoConnection:
         return self._env
 
     @property
+    def userdata(self):
+        return self.api.userdata
+
+    @property
     def api(self):
         if self._api is None:
             self._api = self._establish_connection()
             name = self._api.userdata.get('name')
-            upn = self._api.userdata.get('upn')
+            upn = self._api.userdata.get('profile').get('userPrincipalName')
             print(f"Authenticated user: {name} ({upn})")
 
         return self._api
