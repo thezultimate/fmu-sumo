@@ -17,10 +17,11 @@ class FileOnDisk:
         else:
             self.metadata_path = metadata_path
 
+        self.path = path
+
         self._metadata = self.get_metadata(self.metadata_path)
         self._bytestring = self.file_to_bytestring(path)
         self._size = None
-        self._path = path
         self._casename = None
         self._sumo_parent_id = None
         self._sumo_child_id = None
@@ -67,10 +68,6 @@ class FileOnDisk:
         if self._filepath_relative_to_case_root is None:
             self._filepath_relative_to_case_root = self._get_filepath_relative_to_case_root()
         return self._filepath_relative_to_case_root
-
-    @property
-    def path(self):
-        return self._path
 
     @property
     def size(self):
@@ -120,7 +117,6 @@ class FileOnDisk:
     def _calculate_size(self, path):
         """calculate file size in bytes from path, return as int"""
         return os.path.getsize(path)
-
 
     def _datetime_now(self):
         """Return datetime now on FMU standard format"""
@@ -220,18 +216,23 @@ class FileOnDisk:
         _t0 = time.perf_counter()
         _t0_metadata = time.perf_counter()
 
-        result = {'timing': {},
-                  'response': {},
-                  'status': None}
+        result = {}
 
         response = self._upload_metadata(sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id)
 
         _t1_metadata = time.perf_counter()
-        result['response']['metadata'] = response
-        result['timing']['metadata'] = {'size' : None, 
-                                        'time_start': _t0_metadata, 
-                                        'time_end': _t1_metadata, 
-                                        'time_elapsed': _t1_metadata-_t0_metadata}
+        result['metadata_upload_response_status_code'] = response.status_code
+        result['metadata_upload_response_text'] = response.text
+        result['metadata_upload_time_start'] = _t0_metadata
+        result['metadata_upload_time_end'] = _t1_metadata
+        result['metadata_upload_time_elapsed'] = _t1_metadata-_t0_metadata
+        result['metadata_file_path'] = self.metadata_path
+        result['metadata_file_size'] = self._calculate_size(self.metadata_path)
+
+        # want these included even if returning before blob upload
+        result['blob_file_path'] = self.path
+        result['blob_file_size'] = self.size
+
 
         if response.status_code == 400:
             result['status'] = 'rejected'
@@ -248,29 +249,16 @@ class FileOnDisk:
         _t0_blob = time.perf_counter()
         response = self._upload_bytestring(sumo_connection=sumo_connection, url=self._blob_url)
         _t1_blob = time.perf_counter()
-        result['response']['blob'] = response
-        result['timing']['blob'] = {'size' : self.size, 
-                                        'time_start': _t0_blob, 
-                                        'time_end': _t1_blob, 
-                                        'time_elapsed': _t1_blob-_t0_blob}
 
-        if not response.ok:
-            result['status'] = 'failed'
-            return result
-
-        #if response.json() != 'Created':
-        #    raise ValueError('Unexpected response from Sumo on blob upload: {}'.format(response.json()))
+        result['blob_upload_response_status_code'] = response.status_code
+        result['blob_upload_response_text'] = response.text
+        result['blob_upload_time_start'] = _t0_blob
+        result['blob_upload_time_end'] = _t1_blob
+        result['blob_upload_time_elapsed'] = _t1_blob-_t0_blob
 
         if response.status_code != 201:
             print(response)
             result['status'] = 'failed'
-            return result
-
-        _t1 = time.perf_counter()
-        result['timing']['total'] = {'size' : None, 
-                                     'time_start': _t0, 
-                                     'time_end': _t1, 
-                                     'time_elapsed': _t1-_t0}
 
         result['status'] = 'ok'
 
