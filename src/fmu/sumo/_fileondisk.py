@@ -120,7 +120,7 @@ class FileOnDisk:
 
     def _datetime_now(self):
         """Return datetime now on FMU standard format"""
-        return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        return datetime.datetime.now().isoformat()
 
     def _get_filepath_relative_to_case_root(self):
         """Derive the local filepath from the absolute path"""
