@@ -35,11 +35,6 @@ class SumoConnection:
 
     def _establish_connection(self):
         """Establish the connection with Sumo API, take user through 2FA."""
-
-        print('establish connection')
         api = CallSumoApi(env=self.env)
         api.get_bear_token()
-
-        print('done')
-
         return api
