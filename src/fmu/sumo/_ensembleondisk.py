@@ -237,12 +237,16 @@ class EnsembleOnDisk:
         ok_uploads = []
         rejected_uploads = []
 
-        _files_to_upload = self.files
+        if not self.files:
+            print('No files to upload. Check searchstring.')
+            return
+
+        _files_to_upload = [f for f in self.files]
 
         attempts = 0
 
         while _files_to_upload:
-            upload_results = UPLOAD_FILES(files=self.files, sumo_parent_id=sumo_parent_id, sumo_connection=self.sumo_connection, threads=threads)
+            upload_results = UPLOAD_FILES(files=_files_to_upload, sumo_parent_id=sumo_parent_id, sumo_connection=self.sumo_connection, threads=threads)
 
             ok_uploads += upload_results.get('ok_uploads') # append
             rejected_uploads += upload_results.get('rejected_uploads') # append
