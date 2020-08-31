@@ -179,7 +179,7 @@ class FileOnDisk:
 
     def parse_yaml(self, path):
         if not os.path.isfile(path):
-            return None
+            raise IOError(f'File does not exist: {path}')
         with open(path, 'r') as stream:
             data = yaml.safe_load(stream)
         return data
@@ -196,6 +196,9 @@ class FileOnDisk:
 
     def _upload_metadata(self, sumo_connection, sumo_parent_id):
         response = sumo_connection.api.save_child_level_json(json=self.metadata, object_id=sumo_parent_id)
+        #print('===')
+        #print(self.metadata)
+        #print('===')
         return response
 
     def _upload_bytestring(self, sumo_connection, url):
