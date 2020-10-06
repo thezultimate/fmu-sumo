@@ -19,6 +19,8 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
 
     def _upload_file(arg):
         file, sumo_connection, sumo_parent_id = arg
+        if not file:
+            return
         result = file.upload_to_sumo(sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id)
         return result
 
