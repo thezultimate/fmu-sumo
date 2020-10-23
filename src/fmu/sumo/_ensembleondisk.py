@@ -180,6 +180,8 @@ class EnsembleOnDisk:
 
         df = pd.DataFrame().from_dict(uploads)
 
+        print('_calculate_upload_stats, showplot is {}'.format(showplot))
+
         stats = {
             'blob': {'upload_time' : {'mean': df['blob_upload_time_elapsed'].mean(),
                                       'max': df['blob_upload_time_elapsed'].max(),
@@ -252,6 +254,7 @@ class EnsembleOnDisk:
             rejected_uploads += upload_results.get('rejected_uploads') # append
             failed_uploads = upload_results.get('failed_uploads') # replace
 
+            # updating list of files for upload to only those who have failed
             _files_to_upload = [f.get('file') for f in failed_uploads]
 
             attempts += 1
@@ -260,6 +263,7 @@ class EnsembleOnDisk:
                 break
 
             if not _files_to_upload:
+                print('No more files to upload, breaking the loop')
                 break
 
             print('Retrying {} failed uploads after waiting 3 seconds'.format(len(failed_uploads)))
