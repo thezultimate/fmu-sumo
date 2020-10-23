@@ -12,7 +12,7 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
     import time
     from concurrent.futures import ThreadPoolExecutor
 
-    def _upload_files(files, sumo_connection, sumo_parent_id, threads=4):
+    def _upload_files(files, sumo_connection, sumo_parent_id, threads=threads):
         with ThreadPoolExecutor(threads) as executor:
             results = executor.map(_upload_file, [(file, sumo_connection, sumo_parent_id) for file in files])
         return results
