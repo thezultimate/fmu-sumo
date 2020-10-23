@@ -17,14 +17,14 @@ class SumoConnection:
 
     @property
     def userdata(self):
-        return self.api.userdata
+        return self.api.userdata()
 
     @property
     def api(self):
         if self._api is None:
             self._api = self._establish_connection()
-            name = self._api.userdata.get('name')
-            upn = self._api.userdata.get('profile').get('userPrincipalName')
+            name = self._api.userdata().get('name')
+            upn = self._api.userdata().get('profile').get('userPrincipalName')
             print(f"Authenticated user: {name} ({upn})")
 
         return self._api
@@ -36,5 +36,5 @@ class SumoConnection:
     def _establish_connection(self):
         """Establish the connection with Sumo API, take user through 2FA."""
         api = CallSumoApi(env=self.env)
-        api.get_bear_token()
+        api.get_bearer_token()
         return api
