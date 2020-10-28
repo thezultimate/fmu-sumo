@@ -17,7 +17,7 @@ class FileOnDisk:
         else:
             self.metadata_path = metadata_path
 
-        self.path = path
+        self.path = os.path.abspath(path)
 
         self._metadata = self.get_metadata(self.metadata_path)
         self._bytestring = self.file_to_bytestring(path)
@@ -126,7 +126,7 @@ class FileOnDisk:
         """Derive the local filepath from the absolute path"""
         casename = self._get_casename()
         if casename not in self.path:
-            raise IOError('Could not find casename in filepath')
+            raise IOError(f'Could not find casename ({casename}) in filepath: {self.path}')
         return self.path.split(casename)[-1][1:]
 
     def _get_casename(self):
