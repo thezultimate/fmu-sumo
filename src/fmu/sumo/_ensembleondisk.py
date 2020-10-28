@@ -74,7 +74,7 @@ class EnsembleOnDisk:
 
     @property
     def casename(self):
-        return self._manifest.get('case')
+        return self._manifest.get('fmu_ensemble').get('case')
 
     @property
     def sumo_parent_id(self):
