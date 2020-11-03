@@ -17,7 +17,7 @@ class FileOnDisk:
         else:
             self.metadata_path = metadata_path
 
-        self.path = path
+        self.path = os.path.abspath(path)
 
         self._metadata = self.get_metadata(self.metadata_path)
         self._bytestring = self.file_to_bytestring(path)
@@ -126,7 +126,7 @@ class FileOnDisk:
         """Derive the local filepath from the absolute path"""
         casename = self._get_casename()
         if casename not in self.path:
-            raise IOError('Could not find casename in filepath')
+            raise IOError(f'Could not find casename ({casename}) in filepath: {self.path}')
         return self.path.split(casename)[-1][1:]
 
     def _get_casename(self):
@@ -195,15 +195,16 @@ class FileOnDisk:
         return bytestring
 
     def _upload_metadata(self, sumo_connection, sumo_parent_id):
-        response = sumo_connection.api.save_child_level_json(json=self.metadata, object_id=sumo_parent_id)
+        response = sumo_connection.api.save_child_level_json(json=self.metadata, parent_id=sumo_parent_id)
         #print('===')
         #print(self.metadata)
         #print('===')
         return response
 
-    def _upload_bytestring(self, sumo_connection, url):
-        response = sumo_connection.api.save_blob(blob=self.bytestring, url=url)
+    def _upload_bytestring(self, sumo_connection, object_id):
+        response = sumo_connection.api.save_blob(blob=self.bytestring, object_id=object_id)
         return response
+
 
     def upload_to_sumo(self, sumo_parent_id, sumo_connection):
         """Upload this file to Sumo"""
@@ -246,11 +247,10 @@ class FileOnDisk:
             return result
 
         self._sumo_child_id = response.json().get('objectid')
-        self._blob_url = response.json().get('blob_url')
 
         # UPLOAD BLOB
         _t0_blob = time.perf_counter()
-        response = self._upload_bytestring(sumo_connection=sumo_connection, url=self._blob_url)
+        response = self._upload_bytestring(sumo_connection=sumo_connection, object_id=self._sumo_child_id)
         _t1_blob = time.perf_counter()
 
         result['blob_upload_response_status_code'] = response.status_code
