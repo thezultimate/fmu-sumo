@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import argparse
 from fmu import sumo
 import os
@@ -26,10 +24,10 @@ def main():
     e.add_files(os.path.join(args.searchpath))
 
     # upload the indexed files
-    e.upload(threads=args.threads)
+    e.upload(threads=args.threads, register_ensemble=False)   # registration should have been done by HOOK workflow
 
     # tmp: Let me know that main has finished
-    print('main() ended')
+    print('upload_during_fmu_runs.py:main() has ended')
 
 def parse_arguments():
 
