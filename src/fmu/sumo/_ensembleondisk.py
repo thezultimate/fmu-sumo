@@ -136,17 +136,30 @@ class EnsembleOnDisk:
             raise error
 
         if len(hits) == 0:
-            print('No matching ensembles found on Sumo --> Not registered on Sumo')
-            print('Registering ensemble on Sumo')
-            sumo_parent_id = self._upload_manifest(self.manifest)
-            print('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
-            return sumo_parent_id
+            return None
 
         if len(hits) == 1:
-            print('Found one matching ensemble on Sumo --> Registered on Sumo')
-            return hits[0].get('_id')
+            sumo_parent_id = hits[0].get('_id')
+            print(f'Already registered on Sumo with ID: {sumo_parent_id}')
+            return sumo_parent_id
 
         raise DuplicateSumoEnsemblesError(f'Found {len(hits)} ensembles with the same ID on Sumo')
+
+    def register(self):
+        """
+            Register this ensemble on Sumo. 
+            Assumptions: If registering an already existing ensemble, it will be overwritten.
+            ("register" might be a bad word for this...)
+
+            Returns:
+                sumo_parent_id (uuid4): Unique ID for this ensemble on Sumo
+        """
+
+        print('Registering ensemble on Sumo')
+        sumo_parent_id = self._upload_manifest(self.manifest)
+        print('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
+        self._sumo_parent_id = sumo_parent_id   # bad pattern, needs refactoring
+        return sumo_parent_id
 
     def _upload_manifest(self, manifest:dict):
         """Given a manifest dict, upload it to Sumo"""
@@ -220,11 +233,12 @@ class EnsembleOnDisk:
 
         return stats
 
-    def upload(self, threads=4, max_attempts=3, showplot=False):
+    def upload(self, threads=4, max_attempts=3, showplot=False, register_ensemble=False):
         """
         Trigger upload of files in this ensemble.
 
-        Behaviour:
+            Get sumo_parent_id. If None, ensemble is not registered on Sumo. Must be registered first.
+
             Upload all indexed files. Collect the files that have been uploaded OK, the
             ones that have failed and the ones that have been rejected.
 
@@ -232,23 +246,26 @@ class EnsembleOnDisk:
 
         """
 
-        sumo_parent_id = self.sumo_parent_id
-
-        _t0 = time.perf_counter()
-
-        ok_uploads = []
-        rejected_uploads = []
+        if self.sumo_parent_id is None:
+            print('Ensemble is not registered on Sumo')
+            if register_ensemble:
+                print('Registering ensemble')
+                self.register()
+                print('Ensemble registered with ID: {}'.format(self.sumo_parent_id))
 
         if not self.files:
             print('No files to upload. Check searchstring.')
             return
-
         _files_to_upload = [f for f in self.files]
+        ok_uploads = []
+        rejected_uploads = []
+
+        _t0 = time.perf_counter()
 
         attempts = 0
 
         while _files_to_upload:
-            upload_results = UPLOAD_FILES(files=_files_to_upload, sumo_parent_id=sumo_parent_id, sumo_connection=self.sumo_connection, threads=threads)
+            upload_results = UPLOAD_FILES(files=_files_to_upload, sumo_parent_id=self.sumo_parent_id, sumo_connection=self.sumo_connection, threads=threads)
 
             ok_uploads += upload_results.get('ok_uploads') # append
             rejected_uploads += upload_results.get('rejected_uploads') # append
