@@ -1,2 +1,4 @@
 # fmu-sumo
-Interaction with Sumo
+Python package for interaction with Sumo
+
+WORK IN PROGRESS - NOT FOR PRODUCTION
