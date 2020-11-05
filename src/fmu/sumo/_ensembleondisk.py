@@ -283,8 +283,9 @@ class EnsembleOnDisk:
                 print('No more files to upload, breaking the loop')
                 break
 
-            print('Retrying {} failed uploads after waiting 3 seconds'.format(len(failed_uploads)))
+            print('sleep 3')
             time.sleep(3)
+            print('Retrying {} failed uploads after waiting 3 seconds'.format(len(failed_uploads)))
 
         _dt = time.perf_counter() - _t0
 
