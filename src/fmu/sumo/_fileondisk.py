@@ -259,7 +259,7 @@ class FileOnDisk:
         result['blob_upload_time_end'] = _t1_blob
         result['blob_upload_time_elapsed'] = _t1_blob-_t0_blob
 
-        if response.status_code != 201:
+        if response.status_code not in [200,201]:
             print(response)
             result['status'] = 'failed'
 
