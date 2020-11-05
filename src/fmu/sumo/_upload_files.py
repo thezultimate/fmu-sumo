@@ -10,6 +10,7 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
     """
     
     import time
+    from datetime import datetime
     from concurrent.futures import ThreadPoolExecutor
 
     def _upload_files(files, sumo_connection, sumo_parent_id, threads=threads):
@@ -62,6 +63,8 @@ def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
 
 
 
+    print('*'*35)
+    print(f'{datetime.isoformat(datetime.now())}')
     print(f'UPLOADING {len(files)} files with {threads} threads.')
     print(f'Environment is {sumo_connection.env}')
 
