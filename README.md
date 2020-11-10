@@ -1,7 +1,7 @@
 # fmu-sumo
 This package is intended for interaction with Python within the FMU (Fast Model Update) ecosystem. The current primary use case is uploading data from FMU to Sumo, but package may be extended to also use data from Sumo.
 
-WORK IN PROGRESS - NOT FOR PRODUCTION
+**WORK IN PROGRESS - NOT FOR PRODUCTION**
 
 # concepts
 SumoConnection: The SumoConnection object represents the connection to Sumo, and will handle authentication etc when initiated. This object uses the Sumo python wrapper under the hood.
@@ -13,16 +13,20 @@ When uploading an ensemble, it happens through this pattern:
 ```
 from fmu import sumo
 
-# a connection to Sumo is established
+# Establish connection to Sumo
 connection = sumo.SumoConnection()
 
-# the ensemble object is initiated
+# Initiate the ensemble object
 ensemble = sumo.EnsembleOnDisk(manifest_path='/path/to/manifest', sumo_connection=sumo_connection)
 
-# 
+# Register the ensemble on Sumo (skip this if already registered e.g. in a HOOK workflow in ERT)
+# This uploads ensemble metadata to Sumo
+ensemble.register()
 
-```
-Ensemble registration: The ensemble is registered on Sumo, or confirmed already registered. Example:
-```
-dkjfvnfd
+# Add files to the ensemble
+ensemble.add_files('/globable/path/to/files/*.gri')
+
+# Upload ensemble data objects (files)
+ensemble.upload()
+
 ```
