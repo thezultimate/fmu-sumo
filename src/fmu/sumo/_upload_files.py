@@ -1,5 +1,5 @@
 
-def UPLOAD_FILES(files:list, sumo_parent_id:str, sumo_connection, threads=4):
+def UPLOAD_FILES(files: list, sumo_parent_id: str, sumo_connection, threads=4):
     """
     Upload files, including JSON/manifest, to specified ensemble
 

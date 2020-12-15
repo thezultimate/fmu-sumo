@@ -1,11 +1,11 @@
 import os
 import glob
 import yaml
-from fmu.sumo._fileondisk import FileOnDisk
-from fmu.sumo._connection import SumoConnection
-from fmu.sumo._upload_files import UPLOAD_FILES
 import time
 import pandas as pd
+
+from fmu.sumo._fileondisk import FileOnDisk
+from fmu.sumo._upload_files import UPLOAD_FILES
 
 
 class EnsembleOnDisk:
@@ -40,7 +40,7 @@ class EnsembleOnDisk:
 
     """
 
-    def __init__(self, manifest_path:str, sumo_connection):
+    def __init__(self, manifest_path: str, sumo_connection):
         """
         manifest_path (str): Path to manifest for ensemble
         api (SumoConnection instance): Connection to Sumo.
@@ -92,12 +92,24 @@ class EnsembleOnDisk:
     def files(self):
         return self._files
 
-    def add_files(self, searchstring):
+    def _load_manifest(self, manifest_path: str):
+        """Given manifest path, load the yaml file from disk, return dict"""
+
+        if not os.path.isfile(manifest_path):
+            raise IOError('File does not exist: {}'.format(manifest_path))
+
+        with open(manifest_path, 'r') as stream:
+            yaml_data = yaml.safe_load(stream)
+
+        return yaml_data
+
+    def add_files(self, searchstring, formatting=True):
         """Add files to the ensemble, based on searchstring"""
         file_paths = self._find_file_paths(searchstring)
 
         for file_path in file_paths:
-            file = FileOnDisk(path=file_path)
+            file = FileOnDisk(path=file_path, formatting=formatting)
+
             if file.metadata:
                 self._files.append(file)
             else:
@@ -143,7 +155,7 @@ class EnsembleOnDisk:
             print(f'Already registered on Sumo with ID: {sumo_parent_id}')
             return sumo_parent_id
 
-        raise DuplicateSumoEnsemblesError(f'Found {len(hits)} ensembles with the same ID on Sumo')
+        raise Exception(f'Found {len(hits)} ensembles with the same ID on Sumo')
 
     def register(self):
         """
@@ -166,17 +178,6 @@ class EnsembleOnDisk:
         response = self.sumo_connection.api.save_top_level_json(json=manifest)
         returned_object_id = response.json().get('objectid')
         return returned_object_id
-
-    def _load_manifest(self, manifest_path:str):
-        """Given manifest path, load the yaml file from disk, return dict"""
-
-        if not os.path.isfile(manifest_path):
-            raise IOError('File does not exist: {}'.format(manifest_path))
-
-        with open(manifest_path, 'r') as stream:
-            yaml_data = yaml.safe_load(stream)
-
-        return yaml_data
 
     def _get_fmu_ensemble_id(self):
         """Look up and return ensemble_id from manifest"""
@@ -256,6 +257,7 @@ class EnsembleOnDisk:
         if not self.files:
             print('No files to upload. Check searchstring.')
             return
+
         _files_to_upload = [f for f in self.files]
         ok_uploads = []
         rejected_uploads = []
