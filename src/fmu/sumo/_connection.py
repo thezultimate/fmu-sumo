@@ -1,5 +1,7 @@
 from sumo.wrapper import CallSumoApi
 
+
+# TODO: Should it behave different if token not on cache?
 class SumoConnection:
     """Object to hold authentication towards Sumo"""
 
@@ -13,6 +15,7 @@ class SumoConnection:
     def env(self):
         if self._env is None:
             self._env = 'dev'
+
         return self._env
 
     @property
@@ -23,6 +26,7 @@ class SumoConnection:
     def api(self):
         if self._api is None:
             self._api = self._establish_connection()
+
             name = self._api.userdata().get('name')
             upn = self._api.userdata().get('profile').get('userPrincipalName')
             print(f"Authenticated user: {name} ({upn})")
@@ -31,10 +35,9 @@ class SumoConnection:
 
     def refresh(self):
         """Re-create the connection"""
-        self._api = self._establish_connection()        
+        self._api = self._establish_connection()
 
     def _establish_connection(self):
         """Establish the connection with Sumo API, take user through 2FA."""
         api = CallSumoApi(env=self.env)
-        api.get_bearer_token()
         return api
