@@ -1,3 +1,5 @@
+import logging
+
 from sumo.wrapper import CallSumoApi
 
 
@@ -9,7 +11,7 @@ class SumoConnection:
         self._api = None
         self._env = env
 
-        print('Connection to Sumo on environment: {}'.format(self.env))
+        logging.info('Connection to Sumo on environment: {}'.format(self.env))
 
     @property
     def env(self):
@@ -29,7 +31,7 @@ class SumoConnection:
 
             name = self._api.userdata().get('name')
             upn = self._api.userdata().get('profile').get('userPrincipalName')
-            print(f"Authenticated user: {name} ({upn})")
+            logging.info(f"Authenticated user: {name} ({upn})")
 
         return self._api
 
