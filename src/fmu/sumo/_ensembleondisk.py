@@ -130,7 +130,7 @@ class EnsembleOnDisk:
         """Call sumo, check if the ensemble is already there. Use fmu_ensemble_id for this."""
 
         # search for all ensembles on Sumo, matching on fmu_ensemble_id
-        logging.info('this fmu_ensemble_id: {}'.format(self.fmu_ensemble_id))
+        logging.debug('this fmu_ensemble_id: {}'.format(self.fmu_ensemble_id))
 
         query = f'fmu_ensemble.fmu_ensemble_id:{self.fmu_ensemble_id}'
         search_results = self.sumo_connection.api.searchroot(query, select='source', buckets='source')
@@ -196,7 +196,7 @@ class EnsembleOnDisk:
 
         df = pd.DataFrame().from_dict(uploads)
 
-        logging.info('_calculate_upload_stats, showplot is {}'.format(showplot))
+        logging.debug('_calculate_upload_stats, showplot is {}'.format(showplot))
 
         stats = {
             'blob': {'upload_time' : {'mean': df['blob_upload_time_elapsed'].mean(),
@@ -284,21 +284,21 @@ class EnsembleOnDisk:
                 break
 
             if not _files_to_upload:
-                logging.info('No more files to upload, breaking the loop')
+                logging.debug('No more files to upload, breaking the loop')
                 break
 
-            logging.info('sleep 3')
+            logging.debug('sleep 3')
             time.sleep(3)
-            logging.info('Retrying {} failed uploads after waiting 3 seconds'.format(len(failed_uploads)))
+            logging.debug('Retrying {} failed uploads after waiting 3 seconds'.format(len(failed_uploads)))
 
         _dt = time.perf_counter() - _t0
 
         # TODO: Should use timings from each file directly, rather than the total wall time
         if len(upload_results.get('ok_uploads')):
             _upload_statistics = self._calculate_upload_stats(ok_uploads, showplot=showplot)
+            logging.debug(_upload_statistics)
 
-            logging.info(_upload_statistics)
-
+        logging.info('\nUpload done. Summary:\n')
         logging.info(f"Total: {len(self.files)}" \
               f"\nOK: {len(upload_results.get('ok_uploads'))}" \
               f"\nFailures: {len(upload_results.get('failed_uploads'))}" \

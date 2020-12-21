@@ -132,8 +132,6 @@ class FileOnDisk:
         """Derive the local filepath from the absolute path"""
         casename = self._get_casename()
 
-        logging.info(self.path)
-
         if casename not in self.path:
             raise IOError(f'Could not find casename ({casename}) in filepath: {self.path}')
         return self.path.split(casename)[-1][1:]
@@ -278,7 +276,7 @@ class FileOnDisk:
         result['blob_upload_time_elapsed'] = _t1_blob-_t0_blob
 
         if response.status_code not in [200,201]:
-            logging.info(response)
+            logging.info(f'Upload failed: {response}')
             result['status'] = 'failed'
 
         result['status'] = 'ok'
