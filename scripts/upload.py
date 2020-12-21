@@ -24,10 +24,10 @@ def main():
                   #'pred/share/results/maps/depth_conversion/*.gri',
                   'realization-0/pred/share/results/polygons/*--field_outline.csv',
                   'realization-0/pred/share/results/polygons/*--faultlines.csv',
-                  #'realization-*/pred/share/maps/depth/*.gri',
-                  #'realization-*/pred/share/maps/isochores/*.gri',
-                  #'realization-0/pred/share/maps/fwl/*.gri'
-                  #'realization-0/pred/share/maps/depth_conversion/*.gri',
+                  #'realization-*/pred/share/results/maps/depth/*.gri',
+                  #'realization-*/pred/share/results/maps/isochores/*.gri',
+                  #'realization-0/pred/share/results/maps/fwl/*.gri'
+                  #'realization-0/pred/share/results/maps/depth_conversion/*.gri',
                   'realization-0/pred/share/results/maps/depth/*.gri',
                   'realization-0/pred/share/results/maps/isochores/*.gri',
                   ]
