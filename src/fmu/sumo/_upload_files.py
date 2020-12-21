@@ -26,48 +26,8 @@ def UPLOAD_FILES(files: list, sumo_parent_id: str, sumo_connection, threads=4):
         result = file.upload_to_sumo(sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id)
         return result
 
-    def _print_upload_result(result):
-        response = result.get('response')
-
-        json_status_code = result.get('response').get('metadata').status_code
-        json_response_text = result.get('response').get('metadata').text
-
-        if result.get('response').get('blob'):
-            blob_status_code = result.get('response').get('blob').status_code
-        else:
-            blob_status_code = None
-
-        if result.get('response').get('blob'):
-            blob_response_text = result.get('response').get('blob').text
-        else:
-            blob_response_text = None
-
-
-        logging.info(f"JSON: [{json_status_code}] {json_response_text}")
-        logging.info(f"Blob: [{blob_status_code}] {blob_response_text}\n")
-
-    def _print_rejected_uploads(rejected_uploads):
-
-        logging.info(f'\n\n{len(rejected_uploads)} files rejected by Sumo:')
-
-        for u in rejected_uploads:
-            logging.info('\n'+'-'*50)
-
-            metadata_response = u.get('response').get('metadata')
-            blob_response = u.get('response').get('blob')
-            logging.info(f"Metadata: [{metadata_response.status_code}] {metadata_response.text}")
-
-            if blob_response:
-                logging.info(f"Blob: [{blob_response.status_code}] {ublob_response.text}")
-
-            logging.info('-'*50+'\n')
-
-
-
     logging.info('*'*35)
-    logging.info(f'{datetime.isoformat(datetime.now())}')
-    logging.info(f'UPLOADING {len(files)} files with {threads} threads.')
-    logging.info(f'Environment is {sumo_connection.env}')
+    logging.info(f'{datetime.isoformat(datetime.now())}: Uploading {len(files)} files with {threads} threads on environment {sumo_connection.env}')
 
     results = _upload_files(files=files, sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id, threads=threads)
 
