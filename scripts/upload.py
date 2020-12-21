@@ -1,6 +1,16 @@
 import argparse
 from fmu import sumo
 import os
+import logging
+import sys
+from datetime import datetime
+import time
+
+logger = logging.getLogger()
+#logger.setLevel(logging.INFO)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 def main():
     """Script for uploading data to Sumo"""
@@ -12,14 +22,14 @@ def main():
     subfolders = [#'pred/share/results/maps/depth/*.gri',
                   #'pred/share/results/maps/isochores/*.gri',
                   #'pred/share/results/maps/depth_conversion/*.gri',
-                  'realization-0/pred/share/polygons/*--field_outline.csv',
-                  'realization-0/pred/share/polygons/*--faultlines.csv',
+                  'realization-0/pred/share/results/polygons/*--field_outline.csv',
+                  'realization-0/pred/share/results/polygons/*--faultlines.csv',
                   #'realization-*/pred/share/maps/depth/*.gri',
                   #'realization-*/pred/share/maps/isochores/*.gri',
                   #'realization-0/pred/share/maps/fwl/*.gri'
                   #'realization-0/pred/share/maps/depth_conversion/*.gri',
-                  'realization-0/pred/share/maps/depth/*.gri',
-                  'realization-0/pred/share/maps/isochores/*.gri',
+                  'realization-0/pred/share/results/maps/depth/*.gri',
+                  'realization-0/pred/share/results/maps/isochores/*.gri',
                   ]
 
     sumo_connection = sumo.SumoConnection(env=args.env)
@@ -29,8 +39,16 @@ def main():
         print('Adding files: {}'.format(subfolder))
         e.add_files(os.path.join(args.casepath, subfolder))
     
-    print('\nuploading files')
-    e.upload(threads=args.threads, showplot=True)
+    _t0 = time.perf_counter()
+    print(f'{datetime.isoformat(datetime.now())}: Uploading {len(e.files)} files with {args.threads} threads on environment {args.env}')
+    upload_results = e.upload(threads=args.threads, showplot=False)
+    _dt = time.perf_counter() - _t0
+    print(f"Total: {len(e.files)}" \
+        f"\nOK: {len(upload_results.get('ok_uploads'))}" \
+        f"\nFailures: {len(upload_results.get('failed_uploads'))}" \
+        f"\nRejected: {len(upload_results.get('rejected_uploads'))}" \
+        f"\nWall time: {round(_dt,2)} seconds" \
+        )
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
