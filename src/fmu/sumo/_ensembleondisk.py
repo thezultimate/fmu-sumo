@@ -324,3 +324,5 @@ class EnsembleOnDisk:
                 logging.info(f"Blob: [{u.get('blob_upload_response_status_code')}] {u.get('blob_upload_response_status_text')}")
 
                 logging.info('-'*50+'\n')
+
+        return upload_results

@@ -26,9 +26,6 @@ def UPLOAD_FILES(files: list, sumo_parent_id: str, sumo_connection, threads=4):
         result = file.upload_to_sumo(sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id)
         return result
 
-    logging.info('*'*35)
-    logging.info(f'{datetime.isoformat(datetime.now())}: Uploading {len(files)} files with {threads} threads on environment {sumo_connection.env}')
-
     results = _upload_files(files=files, sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id, threads=threads)
 
     ok_uploads = []
