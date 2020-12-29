@@ -2,6 +2,7 @@ import yaml
 import os
 import datetime
 import time
+import logging
 
 from fmu import sumo
 
@@ -131,8 +132,6 @@ class FileOnDisk:
         """Derive the local filepath from the absolute path"""
         casename = self._get_casename()
 
-        print(self.path)
-
         if casename not in self.path:
             raise IOError(f'Could not find casename ({casename}) in filepath: {self.path}')
         return self.path.split(casename)[-1][1:]
@@ -155,10 +154,10 @@ class FileOnDisk:
         dtype = self.metadata.get('class', {}).get('type')
 
         if dtype is None:
-            #logging.error('Could not get file format from metadata')
-            #logging.error('File: {}'.format(self.path))
-            #logging.error('Metadata file: {}'.format(self.metadata_path))
-            raise MetadataError('Could not get file format')
+            logging.error('Could not get file format from metadata')
+            logging.error('File: {}'.format(self.path))
+            logging.error('Metadata file: {}'.format(self.metadata_path))
+            raise AttributeError('Could not get file format')
 
         return dtype
 
@@ -168,10 +167,10 @@ class FileOnDisk:
         fformat = self.metadata.get('data', {}).get('format')
 
         if fformat is None:
-            #logging.error('Could not get file format from metadata')
-            #logging.error('File: {}'.format(self.path))
-            #logging.error('Metadata file: {}'.format(self.metadata_path))
-            raise MetadataError('Could not get file format')
+            logging.error('Could not get file format from metadata')
+            logging.error('File: {}'.format(self.path))
+            logging.error('Metadata file: {}'.format(self.metadata_path))
+            raise AttributeError('Could not get file format')
 
         return fformat
 
@@ -277,7 +276,7 @@ class FileOnDisk:
         result['blob_upload_time_elapsed'] = _t1_blob-_t0_blob
 
         if response.status_code not in [200,201]:
-            print(response)
+            logging.info(f'Upload failed: {response}')
             result['status'] = 'failed'
 
         result['status'] = 'ok'

@@ -1,3 +1,4 @@
+import logging
 
 def UPLOAD_FILES(files: list, sumo_parent_id: str, sumo_connection, threads=4):
     """
@@ -24,49 +25,6 @@ def UPLOAD_FILES(files: list, sumo_parent_id: str, sumo_connection, threads=4):
             return
         result = file.upload_to_sumo(sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id)
         return result
-
-    def _print_upload_result(result):
-        response = result.get('response')
-
-        json_status_code = result.get('response').get('metadata').status_code
-        json_response_text = result.get('response').get('metadata').text
-
-        if result.get('response').get('blob'):
-            blob_status_code = result.get('response').get('blob').status_code
-        else:
-            blob_status_code = None
-
-        if result.get('response').get('blob'):
-            blob_response_text = result.get('response').get('blob').text
-        else:
-            blob_response_text = None
-
-
-        print(f"JSON: [{json_status_code}] {json_response_text}")
-        print(f"Blob: [{blob_status_code}] {blob_response_text}\n")
-
-    def _print_rejected_uploads(rejected_uploads):
-
-        print(f'\n\n{len(rejected_uploads)} files rejected by Sumo:')
-
-        for u in rejected_uploads:
-            print('\n'+'-'*50)
-
-            metadata_response = u.get('response').get('metadata')
-            blob_response = u.get('response').get('blob')
-            print(f"Metadata: [{metadata_response.status_code}] {metadata_response.text}")
-
-            if blob_response:
-                print(f"Blob: [{blob_response.status_code}] {ublob_response.text}")
-
-            print('-'*50+'\n')
-
-
-
-    print('*'*35)
-    print(f'{datetime.isoformat(datetime.now())}')
-    print(f'UPLOADING {len(files)} files with {threads} threads.')
-    print(f'Environment is {sumo_connection.env}')
 
     results = _upload_files(files=files, sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id, threads=threads)
 

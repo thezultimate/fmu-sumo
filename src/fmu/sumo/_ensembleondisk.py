@@ -2,6 +2,8 @@ import os
 import glob
 import yaml
 import time
+import logging
+import warnings
 import pandas as pd
 
 from fmu.sumo._fileondisk import FileOnDisk
@@ -113,22 +115,22 @@ class EnsembleOnDisk:
             if file.metadata:
                 self._files.append(file)
             else:
-                print('No metadata, skipping file: {}'.format(file))
+                warnings.warn('No metadata, skipping file: {}'.format(file))
 
     def _find_file_paths(self, searchstring):
         """Given a searchstring, return yielded valid files as list
         of FileOnDisk instances"""
         files = [f for f in glob.glob(searchstring) if os.path.isfile(f)]
         if len(files) == 0:
-            print('No files found! Bad searchstring?')
-            print('Searchstring: {}'.format(searchstring))
+            warnings.warn('No files found! Bad searchstring?')
+            warnings.warn('Searchstring: {}'.format(searchstring))
         return files
 
     def _get_sumo_parent_id(self):
         """Call sumo, check if the ensemble is already there. Use fmu_ensemble_id for this."""
 
         # search for all ensembles on Sumo, matching on fmu_ensemble_id
-        print('this fmu_ensemble_id: {}'.format(self.fmu_ensemble_id))
+        logging.debug('this fmu_ensemble_id: {}'.format(self.fmu_ensemble_id))
 
         query = f'fmu_ensemble.fmu_ensemble_id:{self.fmu_ensemble_id}'
         search_results = self.sumo_connection.api.searchroot(query, select='source', buckets='source')
@@ -139,12 +141,12 @@ class EnsembleOnDisk:
             if search_results.get('error').get('type') == 'index_not_found_exception':
                 # index not found, crazy rare exception. Index is empty.
                 sumo_parent_id = self._upload_manifest(self.manifest)
-                print('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
+                logging.info('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
                 return sumo_parent_id
 
         except Exception as error:
-            print('ERROR in hits. This is what the search results looked like:')
-            print(search_results)
+            logging.debug('ERROR in hits. This is what the search results looked like:')
+            logging.debug(search_results)
             raise error
 
         if len(hits) == 0:
@@ -152,7 +154,7 @@ class EnsembleOnDisk:
 
         if len(hits) == 1:
             sumo_parent_id = hits[0].get('_id')
-            print(f'Already registered on Sumo with ID: {sumo_parent_id}')
+            logging.info(f'Already registered on Sumo with ID: {sumo_parent_id}')
             return sumo_parent_id
 
         raise Exception(f'Found {len(hits)} ensembles with the same ID on Sumo')
@@ -167,9 +169,9 @@ class EnsembleOnDisk:
                 sumo_parent_id (uuid4): Unique ID for this ensemble on Sumo
         """
 
-        print('Registering ensemble on Sumo')
+        logging.info('Registering ensemble on Sumo')
         sumo_parent_id = self._upload_manifest(self.manifest)
-        print('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
+        logging.info('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
         self._sumo_parent_id = sumo_parent_id   # bad pattern, needs refactoring
         return sumo_parent_id
 
@@ -194,7 +196,7 @@ class EnsembleOnDisk:
 
         df = pd.DataFrame().from_dict(uploads)
 
-        print('_calculate_upload_stats, showplot is {}'.format(showplot))
+        logging.debug('_calculate_upload_stats, showplot is {}'.format(showplot))
 
         stats = {
             'blob': {'upload_time' : {'mean': df['blob_upload_time_elapsed'].mean(),
@@ -212,7 +214,7 @@ class EnsembleOnDisk:
                         }
 
         if showplot:
-            print('plotting...')
+            logging.info('plotting...')
             import matplotlib.pyplot as plt
             fig, ax = plt.subplots()
             ax_sec = ax.twinx()
@@ -248,14 +250,14 @@ class EnsembleOnDisk:
         """
 
         if self.sumo_parent_id is None:
-            print('Ensemble is not registered on Sumo')
+            logging.info('Ensemble is not registered on Sumo')
             if register_ensemble:
-                print('Registering ensemble')
+                logging.info('Registering ensemble')
                 self.register()
-                print('Ensemble registered with ID: {}'.format(self.sumo_parent_id))
+                logging.info('Ensemble registered with ID: {}'.format(self.sumo_parent_id))
 
         if not self.files:
-            print('No files to upload. Check searchstring.')
+            warnings.warn('No files to upload. Check searchstring.')
             return
 
         _files_to_upload = [f for f in self.files]
@@ -278,26 +280,26 @@ class EnsembleOnDisk:
 
             attempts += 1
             if attempts >= max_attempts:
-                print('Stopping after {} attempts'.format(attempts))
+                warnings.warn('Stopping after {} attempts'.format(attempts))
                 break
 
             if not _files_to_upload:
-                print('No more files to upload, breaking the loop')
+                logging.debug('No more files to upload, breaking the loop')
                 break
 
-            print('sleep 3')
+            logging.debug('sleep 3')
             time.sleep(3)
-            print('Retrying {} failed uploads after waiting 3 seconds'.format(len(failed_uploads)))
+            logging.debug('Retrying {} failed uploads after waiting 3 seconds'.format(len(failed_uploads)))
 
         _dt = time.perf_counter() - _t0
 
         # TODO: Should use timings from each file directly, rather than the total wall time
         if len(upload_results.get('ok_uploads')):
             _upload_statistics = self._calculate_upload_stats(ok_uploads, showplot=showplot)
+            logging.debug(_upload_statistics)
 
-            print(_upload_statistics)
-
-        print(f"Total: {len(self.files)}" \
+        logging.info('\nUpload done. Summary:\n')
+        logging.info(f"Total: {len(self.files)}" \
               f"\nOK: {len(upload_results.get('ok_uploads'))}" \
               f"\nFailures: {len(upload_results.get('failed_uploads'))}" \
               f"\nRejected: {len(upload_results.get('rejected_uploads'))}" \
@@ -305,20 +307,22 @@ class EnsembleOnDisk:
                 )
 
         if failed_uploads:
-            print('='*50)
-            print(f'{len(failed_uploads)} failed')
-            print('='*50)
-            print(failed_uploads)
+            logging.info('='*50)
+            logging.info(f'{len(failed_uploads)} failed')
+            logging.info('='*50)
+            logging.info(failed_uploads)
 
         if len(rejected_uploads):
-            print(f'\n\n{len(rejected_uploads)} files rejected by Sumo. First 5 rejected files:')
+            logging.info(f'\n\n{len(rejected_uploads)} files rejected by Sumo. First 5 rejected files:')
 
             for u in rejected_uploads[0:4]:
-                print('\n'+'='*50)
-                print(u)
+                logging.info('\n'+'='*50)
+                logging.info(u)
 
-                print(f"Filepath: {u.get('blob_file_path')}")
-                print(f"Metadata: [{u.get('metadata_upload_response_status_code')}] {u.get('metadata_upload_response_text')}")
-                print(f"Blob: [{u.get('blob_upload_response_status_code')}] {u.get('blob_upload_response_status_text')}")
+                logging.info(f"Filepath: {u.get('blob_file_path')}")
+                logging.info(f"Metadata: [{u.get('metadata_upload_response_status_code')}] {u.get('metadata_upload_response_text')}")
+                logging.info(f"Blob: [{u.get('blob_upload_response_status_code')}] {u.get('blob_upload_response_status_text')}")
 
-                print('-'*50+'\n')
+                logging.info('-'*50+'\n')
+
+        return upload_results
