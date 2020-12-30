@@ -16,10 +16,9 @@ def test_uploader():
     env = 'dev'
     threads = 1
 
-    # testdata includes one file with missing metadata, which should give warning
     sumo_connection = sumo.SumoConnection(env=env)
     e = sumo.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
-    with pytest.warns(UserWarning) as warnings_record:
+    with pytest.warns(UserWarning) as warnings_record:  # testdata contains one file with missing metadata
         e.add_files(search_path + '/*.bin')
     e.upload(threads=threads)
 
