@@ -7,7 +7,7 @@ import warnings
 import pandas as pd
 
 from fmu.sumo._fileondisk import FileOnDisk
-from fmu.sumo._upload_files import UPLOAD_FILES
+from fmu.sumo._upload_files import upload_files
 
 
 class EnsembleOnDisk:
@@ -24,12 +24,17 @@ class EnsembleOnDisk:
 
     Example for initialization:
         >>> from fmu import sumo
-        >>> sumo_connection = sumo.SumoConnection(env=args.env)
+
+        >>> env = 'dev'
+        >>> manifest_path = 'path/to/ensemble_manifest.yaml'
+        >>> search_path = 'path/to/search_path/'
+
+        >>> sumo_connection = sumo.SumoConnection(env=env)
         >>> e = sumo.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
 
         After initialization, files must be explicitly indexed into the EnsembleOnDisk object:
 
-        >>> e.add_files(searchpath)
+        >>> e.add_files(search_path)
 
         When initialized, the ensemble can be uploaded to Sumo:
 
@@ -47,13 +52,13 @@ class EnsembleOnDisk:
         manifest_path (str): Path to manifest for ensemble
         api (SumoConnection instance): Connection to Sumo.
         """
-
-        self._manifest = self._load_manifest(manifest_path)
-        self._fmu_ensemble_id = None
-        self._files = []
         self.sumo_connection = sumo_connection
+
+        self._manifest = _load_manifest(manifest_path)
+        self._fmu_ensemble_id = None
         self._sumo_parent_id = None
         self._on_sumo = None
+        self._files = []
 
     def __str__(self):
         s = f'{self.__class__}, {len(self._files)} files.'
@@ -63,101 +68,66 @@ class EnsembleOnDisk:
         else:
             s += '\nNot initialized on Sumo.'
 
-        s += '\nFMU casename: {}'.format(self.casename)
+        s += '\nFMU case name: {}'.format(self.case_name)
 
         return s
 
     def __repr__(self):
-        return str(self.__str__)          
+        return str(self.__str__)
 
     @property
     def manifest(self):
         return self._manifest
 
     @property
-    def casename(self):
+    def case_name(self):
         return self._manifest.get('fmu_ensemble').get('case')
 
     @property
     def sumo_parent_id(self):
         if self._sumo_parent_id is None:
             self._sumo_parent_id = self._get_sumo_parent_id()
+
         return self._sumo_parent_id
 
     @property
     def fmu_ensemble_id(self):
         if self._fmu_ensemble_id is None:
             self._fmu_ensemble_id = self._get_fmu_ensemble_id()
+
         return self._fmu_ensemble_id
 
     @property
     def files(self):
         return self._files
 
-    def _load_manifest(self, manifest_path: str):
-        """Given manifest path, load the yaml file from disk, return dict"""
-
-        if not os.path.isfile(manifest_path):
-            raise IOError('File does not exist: {}'.format(manifest_path))
-
-        with open(manifest_path, 'r') as stream:
-            yaml_data = yaml.safe_load(stream)
-
-        return yaml_data
-
-    def add_files(self, searchstring, formatting=True):
-        """Add files to the ensemble, based on searchstring"""
-        file_paths = self._find_file_paths(searchstring)
+    def add_files(self, search_string):
+        """Add files to the ensemble, based on search string"""
+        file_paths = _find_file_paths(search_string)
 
         for file_path in file_paths:
-            file = FileOnDisk(path=file_path, formatting=formatting)
-
-            if file.metadata:
+            try:
+                file = FileOnDisk(path=file_path)
                 self._files.append(file)
-            else:
-                warnings.warn('No metadata, skipping file: {}'.format(file))
 
-    def _find_file_paths(self, searchstring):
-        """Given a searchstring, return yielded valid files as list
-        of FileOnDisk instances"""
-        files = [f for f in glob.glob(searchstring) if os.path.isfile(f)]
-        if len(files) == 0:
-            warnings.warn('No files found! Bad searchstring?')
-            warnings.warn('Searchstring: {}'.format(searchstring))
-        return files
+            except IOError as err:
+                info = f'{err}. No metadata, skipping file.'
+                warnings.warn(info)
+                print(info)
 
     def _get_sumo_parent_id(self):
         """Call sumo, check if the ensemble is already there. Use fmu_ensemble_id for this."""
-
-        # search for all ensembles on Sumo, matching on fmu_ensemble_id
-        logging.debug('this fmu_ensemble_id: {}'.format(self.fmu_ensemble_id))
-
         query = f'fmu_ensemble.fmu_ensemble_id:{self.fmu_ensemble_id}'
         search_results = self.sumo_connection.api.searchroot(query, select='source', buckets='source')
 
-        try:
-            hits = search_results.get('hits').get('hits')
-        except AttributeError:
-            if search_results.get('error').get('type') == 'index_not_found_exception':
-                # index not found, crazy rare exception. Index is empty.
-                sumo_parent_id = self._upload_manifest(self.manifest)
-                logging.info('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
-                return sumo_parent_id
-
-        except Exception as error:
-            logging.debug('ERROR in hits. This is what the search results looked like:')
-            logging.debug(search_results)
-            raise error
+        hits = search_results.get('hits').get('hits')
 
         if len(hits) == 0:
             return None
 
-        if len(hits) == 1:
+        elif len(hits) == 1:
             sumo_parent_id = hits[0].get('_id')
-            logging.info(f'Already registered on Sumo with ID: {sumo_parent_id}')
             return sumo_parent_id
-
-        raise Exception(f'Found {len(hits)} ensembles with the same ID on Sumo')
 
     def register(self):
         """
@@ -168,75 +138,41 @@ class EnsembleOnDisk:
             Returns:
                 sumo_parent_id (uuid4): Unique ID for this ensemble on Sumo
         """
+        info = 'Registering ensemble on Sumo'
+        logging.info(info)
+        print(info)
 
-        logging.info('Registering ensemble on Sumo')
         sumo_parent_id = self._upload_manifest(self.manifest)
-        logging.info('Ensemble registered. SumoID: {}'.format(sumo_parent_id))
-        self._sumo_parent_id = sumo_parent_id   # bad pattern, needs refactoring
+        self._sumo_parent_id = sumo_parent_id
+
+        info = 'Ensemble registered. SumoID: {}'.format(sumo_parent_id)
+        logging.info(info)
+        print(info)
+
         return sumo_parent_id
 
-    def _upload_manifest(self, manifest:dict):
+    def _upload_manifest(self, manifest: dict):
         """Given a manifest dict, upload it to Sumo"""
         response = self.sumo_connection.api.save_top_level_json(json=manifest)
+
         returned_object_id = response.json().get('objectid')
+
+        info = 'Ensemble registered. SumoID: {}'.format(returned_object_id)
+        logging.info(info)
+        print(info)
+
         return returned_object_id
 
     def _get_fmu_ensemble_id(self):
         """Look up and return ensemble_id from manifest"""
         fmu_ensemble_id = self.manifest.get('fmu_ensemble').get('fmu_ensemble_id')
+
         if not fmu_ensemble_id:
             raise ValueError('Could not get fmu_ensemble_id from ensemble metadata')
+
         return fmu_ensemble_id
 
-    def _calculate_upload_stats(self, uploads:list, showplot:bool):
-        """
-        Given a list of results from file upload, calculate and return timing statistics
-        for uploads
-        """
-
-        df = pd.DataFrame().from_dict(uploads)
-
-        logging.debug('_calculate_upload_stats, showplot is {}'.format(showplot))
-
-        stats = {
-            'blob': {'upload_time' : {'mean': df['blob_upload_time_elapsed'].mean(),
-                                      'max': df['blob_upload_time_elapsed'].max(),
-                                      'min': df['blob_upload_time_elapsed'].min(),
-                                      'std': df['blob_upload_time_elapsed'].std(),
-                                      },
-                                },
-            'metadata': {'upload_time' : {'mean': df['metadata_upload_time_elapsed'].mean(),
-                                      'max': df['metadata_upload_time_elapsed'].max(),
-                                      'min': df['metadata_upload_time_elapsed'].min(),
-                                      'std': df['metadata_upload_time_elapsed'].std(),
-                                      },
-                                },
-                        }
-
-        if showplot:
-            logging.info('plotting...')
-            import matplotlib.pyplot as plt
-            fig, ax = plt.subplots()
-            ax_sec = ax.twinx()
-
-            df['blob_upload_time_elapsed'].plot(ax=ax, color='green', legend=True)
-            df['blob_file_size'].plot(ax=ax_sec, linewidth=0, marker='.', color='blue', legend=True)
-            df['metadata_upload_time_elapsed'].plot(ax=ax, color='black', legend=True)
-
-            ax.set_ylabel('Time elapsed (seconds)')
-            ax_sec.set_ylabel('File size (bytes)')
-
-            ax.set_ylim(ymin=0)
-            ax_sec.set_ylim(ymin=0)
-
-            ax.legend(loc='upper left')
-            ax_sec.legend(loc='upper right')
-
-            plt.show()
-
-        return stats
-
-    def upload(self, threads=4, max_attempts=3, showplot=False, register_ensemble=False):
+    def upload(self, threads=4, max_attempts=3, register_ensemble=False):
         """
         Trigger upload of files in this ensemble.
 
@@ -251,78 +187,133 @@ class EnsembleOnDisk:
 
         if self.sumo_parent_id is None:
             logging.info('Ensemble is not registered on Sumo')
+
             if register_ensemble:
-                logging.info('Registering ensemble')
                 self.register()
-                logging.info('Ensemble registered with ID: {}'.format(self.sumo_parent_id))
+            else:
+                raise IOError('Ensemble is not registered on sumo. Set register_ensemble to True if you want to do so.')
 
         if not self.files:
-            warnings.warn('No files to upload. Check searchstring.')
-            return
+            raise FileExistsError('No files to upload. Check search string.')
 
-        _files_to_upload = [f for f in self.files]
         ok_uploads = []
+        failed_uploads = []
         rejected_uploads = []
-
-        _t0 = time.perf_counter()
+        files_to_upload = [f for f in self.files]
 
         attempts = 0
+        _t0 = time.perf_counter()
 
-        while _files_to_upload:
-            upload_results = UPLOAD_FILES(files=_files_to_upload, sumo_parent_id=self.sumo_parent_id, sumo_connection=self.sumo_connection, threads=threads)
+        while files_to_upload and attempts < max_attempts:
+            upload_results = upload_files(files=files_to_upload, sumo_parent_id=self.sumo_parent_id,
+                                          sumo_connection=self.sumo_connection, threads=threads)
 
-            ok_uploads += upload_results.get('ok_uploads') # append
-            rejected_uploads += upload_results.get('rejected_uploads') # append
-            failed_uploads = upload_results.get('failed_uploads') # replace
+            ok_uploads += upload_results.get('ok_uploads')
+            rejected_uploads += upload_results.get('rejected_uploads')
+            failed_uploads = upload_results.get('failed_uploads')
 
-            # updating list of files for upload to only those who have failed
-            _files_to_upload = [f.get('file') for f in failed_uploads]
+            files_to_upload = [f.get('file') for f in failed_uploads]
 
             attempts += 1
-            if attempts >= max_attempts:
-                warnings.warn('Stopping after {} attempts'.format(attempts))
-                break
 
-            if not _files_to_upload:
-                logging.debug('No more files to upload, breaking the loop')
-                break
-
-            logging.debug('sleep 3')
             time.sleep(3)
             logging.debug('Retrying {} failed uploads after waiting 3 seconds'.format(len(failed_uploads)))
 
+        if files_to_upload:
+            warnings.warn('Stopping after {} attempts'.format(attempts))
+
         _dt = time.perf_counter() - _t0
 
-        # TODO: Should use timings from each file directly, rather than the total wall time
-        if len(upload_results.get('ok_uploads')):
-            _upload_statistics = self._calculate_upload_stats(ok_uploads, showplot=showplot)
-            logging.debug(_upload_statistics)
-
-        logging.info('\nUpload done. Summary:\n')
-        logging.info(f"Total: {len(self.files)}" \
-              f"\nOK: {len(upload_results.get('ok_uploads'))}" \
-              f"\nFailures: {len(upload_results.get('failed_uploads'))}" \
-              f"\nRejected: {len(upload_results.get('rejected_uploads'))}" \
-              f"\nWall time: {_dt} seconds" \
-                )
+        if len(ok_uploads):
+            upload_statistics = _calculate_upload_stats(ok_uploads)
+            logging.info(upload_statistics)
 
         if failed_uploads:
-            logging.info('='*50)
-            logging.info(f'{len(failed_uploads)} failed')
-            logging.info('='*50)
-            logging.info(failed_uploads)
+            logging.info(f'{len(failed_uploads)} files failed to be uploaded')
 
-        if len(rejected_uploads):
+            for u in failed_uploads[0:4]:
+                logging.info('\n' + '=' * 50)
+
+                logging.info(f"Filepath: {u.get('blob_file_path')}")
+                logging.info(f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
+                             f"{u.get('metadata_upload_response_text')}")
+                logging.info(f"Blob: [{u.get('blob_upload_response_status_code')}] "
+                             f"{u.get('blob_upload_response_status_text')}")
+
+        if rejected_uploads:
             logging.info(f'\n\n{len(rejected_uploads)} files rejected by Sumo. First 5 rejected files:')
 
             for u in rejected_uploads[0:4]:
-                logging.info('\n'+'='*50)
-                logging.info(u)
+                logging.info('\n' + '=' * 50)
 
                 logging.info(f"Filepath: {u.get('blob_file_path')}")
-                logging.info(f"Metadata: [{u.get('metadata_upload_response_status_code')}] {u.get('metadata_upload_response_text')}")
-                logging.info(f"Blob: [{u.get('blob_upload_response_status_code')}] {u.get('blob_upload_response_status_text')}")
+                logging.info(f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
+                             f"{u.get('metadata_upload_response_text')}")
+                logging.info(f"Blob: [{u.get('blob_upload_response_status_code')}] "
+                             f"{u.get('blob_upload_response_status_text')}")
 
-                logging.info('-'*50+'\n')
+        print(f"Total: {len(self.files)}"
+              f"\nOK: {len(ok_uploads)}"
+              f"\nFailures: {len(failed_uploads)}"
+              f"\nRejected: {len(rejected_uploads)}"
+              f"\nWall time: {_dt} seconds")
 
-        return upload_results
+        return ok_uploads
+
+
+def _load_manifest(manifest_path: str):
+    """Given manifest path, load the yaml file from disk, return dict"""
+
+    if not os.path.isfile(manifest_path):
+        raise IOError('Manifest file does not exist: {}'.format(manifest_path))
+
+    with open(manifest_path, 'r') as stream:
+        yaml_data = yaml.safe_load(stream)
+
+    return yaml_data
+
+
+def _find_file_paths(search_string):
+    """Given a search string, return yielded valid files as list of FileOnDisk instances"""
+    files = [f for f in glob.glob(search_string) if os.path.isfile(f)]
+
+    if len(files) == 0:
+        info = 'No files found! Please, check the search string.'
+        warnings.warn(info)
+        print(info)
+
+        info = 'Search string: {}'.format(search_string)
+        warnings.warn(info)
+        print(info)
+
+    return files
+
+
+def _calculate_upload_stats(uploads):
+    """
+    Given a list of results from file upload, calculate and return timing statistics for uploads
+    """
+
+    df = pd.DataFrame().from_dict(uploads)
+
+    stats = {
+        'blob': {
+            'upload_time': {
+                'mean': df['blob_upload_time_elapsed'].mean(),
+                'max': df['blob_upload_time_elapsed'].max(),
+                'min': df['blob_upload_time_elapsed'].min(),
+                'std': df['blob_upload_time_elapsed'].std(),
+            },
+        },
+
+        'metadata': {
+            'upload_time': {
+                'mean': df['metadata_upload_time_elapsed'].mean(),
+                'max': df['metadata_upload_time_elapsed'].max(),
+                'min': df['metadata_upload_time_elapsed'].min(),
+                'std': df['metadata_upload_time_elapsed'].std(),
+            },
+        },
+    }
+
+    return stats

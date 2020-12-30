@@ -10,4 +10,4 @@ from ._ensembleondisk import EnsembleOnDisk
 from ._fileondisk import FileOnDisk
 from ._connection import SumoConnection
 
-from ._upload_files import UPLOAD_FILES
+from ._upload_files import upload_files

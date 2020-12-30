@@ -3,7 +3,6 @@ import logging
 from sumo.wrapper import CallSumoApi
 
 
-# TODO: Should it behave different if token not on cache?
 class SumoConnection:
     """Object to hold authentication towards Sumo"""
 
@@ -11,7 +10,9 @@ class SumoConnection:
         self._api = None
         self._env = env
 
-        logging.info('Connection to Sumo on environment: {}'.format(self.env))
+        info = 'Connection to Sumo on environment: {}'.format(self.env)
+        logging.info(info)
+        print(info)
 
     @property
     def env(self):
@@ -31,7 +32,10 @@ class SumoConnection:
 
             name = self._api.userdata().get('name')
             upn = self._api.userdata().get('profile').get('userPrincipalName')
-            logging.info(f"Authenticated user: {name} ({upn})")
+
+            info = f"Authenticated user: {name} ({upn})"
+            logging.info(info)
+            print(info)
 
         return self._api
 
@@ -41,5 +45,4 @@ class SumoConnection:
 
     def _establish_connection(self):
         """Establish the connection with Sumo API, take user through 2FA."""
-        api = CallSumoApi(env=self.env)
-        return api
+        return CallSumoApi(env=self.env)
