@@ -285,7 +285,7 @@ class FileOnDisk:
         if response.status_code not in [200, 201]:
             logging.info(f'Upload failed: {response}')
             result['status'] = 'failed'
-
-        result['status'] = 'ok'
+        else:
+            result['status'] = 'ok'
 
         return result
