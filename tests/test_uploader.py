@@ -26,7 +26,7 @@ def test_uploader():
     for w in warnings_record:
         print(w.message.args[0])
     assert len(warnings_record) == 1
-    #assert warnings_record[0].message.args[0] == "should fail"
+    assert warnings_record[0].message.args[0].endswith("No metadata, skipping file.")
 
     # Assert Ensemble is on Sumo
     query = f'fmu_ensemble.fmu_ensemble_id:{e.fmu_ensemble_id}'
