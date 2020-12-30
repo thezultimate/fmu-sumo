@@ -21,7 +21,7 @@ def main():
     sumo_connection = sumo.SumoConnection(env=env)
     e = sumo.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
     e.add_files(search_path + '/*.bin')
-    e.upload(threads=threads, showplot=True)
+    e.upload(threads=threads, register_ensemble=True)
 
 
 def parse_arguments():
