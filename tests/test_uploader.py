@@ -1,4 +1,6 @@
 import sys
+import pytest
+import warnings
 
 try:
     sys.path.index('../src')
@@ -16,8 +18,15 @@ def test_uploader():
 
     sumo_connection = sumo.SumoConnection(env=env)
     e = sumo.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
-    e.add_files(search_path + '/*.bin')
+    with pytest.warns(UserWarning) as warnings_record:  # testdata contains one file with missing metadata
+        e.add_files(search_path + '/*.bin')
     e.upload(threads=threads)
+
+    # Assert that expected warning was given
+    for w in warnings_record:
+        print(w.message.args[0])
+    assert len(warnings_record) == 1
+    assert warnings_record[0].message.args[0].endswith("No metadata, skipping file.")
 
     # Assert Ensemble is on Sumo
     query = f'fmu_ensemble.fmu_ensemble_id:{e.fmu_ensemble_id}'
