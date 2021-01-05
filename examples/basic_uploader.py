@@ -4,7 +4,6 @@
 """
 import os
 import sys
-import yaml
 import argparse
 
 try:
@@ -12,14 +11,14 @@ try:
 except ValueError:
     sys.path.append('../src')
 
-from fmu import sumo
+from fmu.sumo import uploader
 
 
 def main():
     manifest_path, search_path, env, threads = parse_arguments()
 
-    sumo_connection = sumo.SumoConnection(env=env)
-    e = sumo.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
+    sumo_connection = uploader.SumoConnection(env=env)
+    e = uploader.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
     e.add_files(search_path + '/*.bin')
     e.upload(threads=threads, register_ensemble=True)
 

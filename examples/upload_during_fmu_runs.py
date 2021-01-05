@@ -1,5 +1,5 @@
 import argparse
-from fmu import sumo
+from fmu.sumo import uploader
 import os
 
 """
@@ -15,10 +15,10 @@ def main():
     args = parse_arguments()
 
     # establish the connection
-    sumo_connection = sumo.SumoConnection(env=args.env)
+    sumo_connection = uploader.SumoConnection(env=args.env)
 
     # initiate the ensemble on disk object
-    e = sumo.EnsembleOnDisk(manifest_path=args.manifest_path, sumo_connection=sumo_connection)
+    e = uploader.EnsembleOnDisk(manifest_path=args.manifest_path, sumo_connection=sumo_connection)
 
     # add files to the ensemble on disk object
     e.add_files(os.path.join(args.searchpath))

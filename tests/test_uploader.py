@@ -1,13 +1,12 @@
 import sys
 import pytest
-import warnings
 
 try:
     sys.path.index('../src')
 except ValueError:
     sys.path.append('../src')
 
-from fmu import sumo
+from fmu.sumo import uploader
 
 
 def test_uploader():
@@ -16,8 +15,8 @@ def test_uploader():
     env = 'dev'
     threads = 1
 
-    sumo_connection = sumo.SumoConnection(env=env)
-    e = sumo.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
+    sumo_connection = uploader.SumoConnection(env=env)
+    e = uploader.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
     with pytest.warns(UserWarning) as warnings_record:  # testdata contains one file with missing metadata
         e.add_files(search_path + '/*.bin')
     e.upload(threads=threads)
