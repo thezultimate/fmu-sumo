@@ -6,8 +6,8 @@ import logging
 import warnings
 import pandas as pd
 
-from fmu.sumo._fileondisk import FileOnDisk
-from fmu.sumo._upload_files import upload_files
+from fmu.sumo.uploader._fileondisk import FileOnDisk
+from fmu.sumo.uploader._upload_files import upload_files
 
 
 class EnsembleOnDisk:

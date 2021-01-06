@@ -1,5 +1,5 @@
 import argparse
-from fmu import sumo
+from fmu.sumo import uploader
 import os
 import logging
 import sys
@@ -32,8 +32,8 @@ def main():
                   'realization-0/pred/share/results/maps/isochores/*.gri',
                   ]
 
-    sumo_connection = sumo.SumoConnection(env=args.env)
-    e = sumo.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
+    sumo_connection = uploader.SumoConnection(env=args.env)
+    e = uploader.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
 
     for subfolder in subfolders:
         print('Adding files: {}'.format(subfolder))
