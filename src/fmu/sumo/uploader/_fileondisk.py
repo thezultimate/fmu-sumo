@@ -4,7 +4,7 @@ import datetime
 import time
 import logging
 
-from fmu import sumo
+from sumo.wrapper._request_error import AuthenticationError, TransientError, PermanentError
 
 
 def path_to_yaml_path(path):
@@ -248,17 +248,17 @@ class FileOnDisk:
             result['blob_file_path'] = self.path
             result['blob_file_size'] = self.size
 
-        except sumo.TransientError as err:
+        except TransientError as err:
             result['status'] = 'failed'
             result['metadata_upload_response_status_code'] = err.code
             result['metadata_upload_response_text'] = err.message
             return result
-        except sumo.AuthenticationError as err:
+        except AuthenticationError as err:
             result['status'] = 'rejected'
             result['metadata_upload_response_status_code'] = err.code
             result['metadata_upload_response_text'] = err.message
             return result
-        except sumo.PermanentError as err:
+        except PermanentError as err:
             result['status'] = 'rejected'
             result['metadata_upload_response_status_code'] = err.code
             result['metadata_upload_response_text'] = err.message
