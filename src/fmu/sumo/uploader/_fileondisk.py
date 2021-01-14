@@ -272,8 +272,14 @@ class FileOnDisk:
         # UPLOAD BLOB
         _t0_blob = time.perf_counter()
 
-        response = self._upload_byte_string(sumo_connection=sumo_connection,
-                                            object_id=self._sumo_child_id, blob_url=blob_url)
+        try:
+            response = self._upload_byte_string(sumo_connection=sumo_connection,
+                                                object_id=self._sumo_child_id, blob_url=blob_url)
+        except OSError as err:
+            logging.info(f'Upload failed: {err}')
+            result['status'] = 'failed'
+            return result
+
         _t1_blob = time.perf_counter()
 
         result['blob_upload_response_status_code'] = response.status_code
