@@ -52,7 +52,7 @@ def parse_arguments():
     parser.add_argument('env', type=str, help="Which environment to use.")
     args = parser.parse_args()
 
-    if args.env not in ['dev', 'test', 'prod', 'exp']:
+    if args.env not in ['dev', 'test', 'prod', 'exp', 'fmu']:
         raise ValueError(f'Illegal environment: {args.env}. Valid environments: dev, test, prod, exp')
 
     return args

@@ -6,4 +6,5 @@ echo "** Registering ensemble on Sumo *****"
 echo "** Sourcing virtualenv: $1"
 source $1
 echo "** Running Python"
-python "$2" "$3" "$4"  > log_register_ensemble.txt 2>&1
+echo "$2" "$3" "$4"
+python "$2" "$3" "$4"  > sumo_register_ensemble.log 2>&1
