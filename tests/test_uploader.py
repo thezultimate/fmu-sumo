@@ -10,6 +10,8 @@ from fmu.sumo import uploader
 
 
 def test_uploader():
+    raise NotImplementedError('Must be refactored for Drogon')
+
     manifest_path = 'data/MyCaseName2/fmu_ensemble.yaml'
     search_path = 'data/MyCaseName2/'
     env = 'dev'
@@ -28,7 +30,7 @@ def test_uploader():
     assert warnings_record[0].message.args[0].endswith("No metadata, skipping file.")
 
     # Assert Ensemble is on Sumo
-    query = f'fmu_ensemble.fmu_ensemble_id:{e.fmu_ensemble_id}'
+    query = f'fmu_ensemble_id:{e.fmu_ensemble_id}'
     search_results = sumo_connection.api.searchroot(query, select="source", buckets="source")
     hits = search_results.get('hits').get('hits')
     assert len(hits) == 1
