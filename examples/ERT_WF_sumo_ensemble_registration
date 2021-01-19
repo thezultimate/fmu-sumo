@@ -1,0 +1,3 @@
+-- This is the HOOK workflow which runs pre-simulation, to register the ensemble on Sumo
+
+ERT_WFJ_SUMO_ENSEMBLE_REGISTRATION <SUMO_VIRTUAL_ENV> <CONFIG_PATH>/../../bin/fmu-sumo/examples/register_ensemble.py <ENSEMBLE_METADATA> <SUMO_ENVIRONMENT>
