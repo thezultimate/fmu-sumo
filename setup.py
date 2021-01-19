@@ -20,7 +20,10 @@ setup(
         ],
     author_email='peesv@equinor.com',
     install_requires=[
-                    'xtgeo',
+                    'PyYAML',
+                    'pandas',
+                    'sumo',
+                    'setuptools',
                     ],
     python_requires=">=3.4",
     packages=find_packages("src"),
