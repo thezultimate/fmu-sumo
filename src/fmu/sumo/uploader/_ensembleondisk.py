@@ -81,7 +81,7 @@ class EnsembleOnDisk:
 
     @property
     def case_name(self):
-        return self._manifest.get('fmu_ensemble').get('case')
+        return self._manifest.get('case')
 
     @property
     def sumo_parent_id(self):
@@ -117,7 +117,7 @@ class EnsembleOnDisk:
 
     def _get_sumo_parent_id(self):
         """Call sumo, check if the ensemble is already there. Use fmu_ensemble_id for this."""
-        query = f'fmu_ensemble.fmu_ensemble_id:{self.fmu_ensemble_id}'
+        query = f'fmu_ensemble_id:{self.fmu_ensemble_id}'
         search_results = self.sumo_connection.api.searchroot(query, select='source', buckets='source')
 
         hits = search_results.get('hits').get('hits')
@@ -165,7 +165,7 @@ class EnsembleOnDisk:
 
     def _get_fmu_ensemble_id(self):
         """Look up and return ensemble_id from manifest"""
-        fmu_ensemble_id = self.manifest.get('fmu_ensemble').get('fmu_ensemble_id')
+        fmu_ensemble_id = self.manifest.get('fmu_ensemble_id')
 
         if not fmu_ensemble_id:
             raise ValueError('Could not get fmu_ensemble_id from ensemble metadata')

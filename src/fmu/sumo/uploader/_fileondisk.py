@@ -70,8 +70,8 @@ class FileOnDisk:
         self._sumo_parent_id = None
         self._sumo_blob_id = None
 
-        self._metadata['datetime'] = _datetime_now()
-        self._metadata['data']['relative_file_path'] = self.filepath_relative_to_case_root
+        self._metadata['created_datetime'] = _datetime_now()
+        self._metadata['fmu_file']['relative_path'] = self.filepath_relative_to_case_root
 
     def __repr__(self):
         if not self.metadata:
@@ -123,13 +123,6 @@ class FileOnDisk:
         return self._size
 
     @property
-    def case_name(self):
-        if self._case_name is None:
-            self._case_name = self._get_case_name()
-
-        return self._case_name
-
-    @property
     def basename(self):
         if not self._basename:
             self._basename = os.path.basename(self.path)
@@ -142,13 +135,6 @@ class FileOnDisk:
             self._dir_name = os.path.dirname(self.path)
 
         return self._dir_name
-
-    @property
-    def d_type(self):
-        if not self._d_type:
-            self._d_type = self._get_d_type()
-
-        return self._d_type
 
     @property
     def file_format(self):
@@ -167,37 +153,11 @@ class FileOnDisk:
 
     def _get_filepath_relative_to_case_root(self):
         """Derive the local filepath from the absolute path"""
-        case_name = self._get_case_name()
 
-        if case_name not in self.path:
-            raise IOError(f'Could not find case_name ({case_name}) in filepath: {self.path}')
+        _magic = 'share/results/'   # look for this to derive relative path
 
-        return self.path.split(case_name)[-1][1:]
+        return os.path.join(_magic, self.path.split(_magic)[-1])
 
-    def _get_case_name(self):
-        """Look up case name from metadata"""
-        if not self.metadata:
-            raise AttributeError('Could not get case name from metadata')
-
-        case_name = self.metadata.get('fmu_ensemble').get('case')
-
-        if not case_name:
-            raise AttributeError('Could not get case name from metadata')
-
-        return case_name
-
-    def _get_d_type(self):
-        """Look up file format from metadata"""
-
-        d_type = self.metadata.get('class', {}).get('type')
-
-        if d_type is None:
-            logging.error('Could not get file format from metadata')
-            logging.error('File: {}'.format(self.path))
-            logging.error('Metadata file: {}'.format(self.metadata_path))
-            raise AttributeError('Could not get file format')
-
-        return d_type
 
     def _get_file_format(self):
         """Look up file format from metadata"""
