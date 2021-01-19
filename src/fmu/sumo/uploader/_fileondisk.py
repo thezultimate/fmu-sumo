@@ -137,13 +137,6 @@ class FileOnDisk:
         return self._dir_name
 
     @property
-    def file_format(self):
-        if not self._file_format:
-            self._file_format = self._get_file_format()
-
-        return self._file_format
-
-    @property
     def metadata(self):
         return self._metadata
 
@@ -157,20 +150,6 @@ class FileOnDisk:
         _magic = 'share/results/'   # look for this to derive relative path
 
         return os.path.join(_magic, self.path.split(_magic)[-1])
-
-
-    def _get_file_format(self):
-        """Look up file format from metadata"""
-
-        file_format = self.metadata.get('data', {}).get('format')
-
-        if file_format is None:
-            logging.error('Could not get file format from metadata')
-            logging.error('File: {}'.format(self.path))
-            logging.error('Metadata file: {}'.format(self.metadata_path))
-            raise AttributeError('Could not get file format')
-
-        return file_format
 
     def _upload_metadata(self, sumo_connection, sumo_parent_id):
         response = sumo_connection.api.save_child_level_json(json=self.metadata, parent_id=sumo_parent_id)
