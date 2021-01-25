@@ -34,8 +34,6 @@ def main():
     # Register the ensemble on Sumo
     e.register()
 
-    print(e)
-
 def parse_arguments():
 
     """
