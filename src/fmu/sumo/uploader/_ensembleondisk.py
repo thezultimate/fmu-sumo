@@ -120,6 +120,10 @@ class EnsembleOnDisk:
         query = f'fmu_ensemble_id:{self.fmu_ensemble_id}'
         search_results = self.sumo_connection.api.searchroot(query, select='source', buckets='source')
 
+        # To catch crazy rare situation when index is empty (first upload to new index)
+        if not search_results.get('hits'):
+            return None
+
         hits = search_results.get('hits').get('hits')
 
         if len(hits) == 0:
