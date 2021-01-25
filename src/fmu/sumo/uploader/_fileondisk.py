@@ -145,11 +145,27 @@ class FileOnDisk:
         return self._byte_string
 
     def _get_filepath_relative_to_case_root(self):
-        """Derive the local filepath from the absolute path"""
+        """
+            Derive the local filepath (relative to runpath) from the absolute path.
+            The purpose of including this is first and foremost to retain the
+            information about relative location, as much current logic is built on
+            this. This enables this logic to be used when getting data through API
+            also. Also, Sumo uses this attribute coupled with the fmu_ensemble_id to
+            create a unique object ID for this file when uploaded.
 
-        _magic = 'share/results/'   # look for this to derive relative path
+        """
 
-        return os.path.join(_magic, self.path.split(_magic)[-1])
+        # earlier attempts detected the case name, but this failed when someone used symlinks...
+        # So implementing this somewhat shaky solution, looking first for realization. If
+        # not found, look for "share/results"
+       
+        if 'realization' in self.path:
+            return os.path.join('realization' + self.path.split('realization')[-1])
+
+        if not 'share/results/' in self.path:
+            raise ValueError(f'Expected to see "share/results/" in this path: {self.path}')
+        
+        return os.path.join('share/results/', self.path.split('share/results/')[-1])
 
     def _upload_metadata(self, sumo_connection, sumo_parent_id):
         response = sumo_connection.api.save_child_level_json(json=self.metadata, parent_id=sumo_parent_id)
