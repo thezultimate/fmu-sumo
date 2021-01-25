@@ -7,4 +7,4 @@
 source $1
 #echo "** Running Python"
 #echo "$2" "$3" "$4"
-python "$2" "$3" "$4"  > sumo_register_ensemble.log 2>&1
+python "$2" "$3" "$4" # > sumo_register_ensemble.log 2>&1
