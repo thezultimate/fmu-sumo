@@ -16,49 +16,47 @@ def main():
     """Script for uploading data to Sumo"""
 
     args = parse_arguments()
-    manifest_path = os.path.join(args.casepath, 'pred/share/runinfo/manifest.yaml')
+    manifest_path = os.path.join(args.casepath, f'{args.iteration}/share/metadata/fmu_ensemble.yml')
 
     # add some files
-    subfolders = [#'pred/share/results/maps/depth/*.gri',
-                  #'pred/share/results/maps/isochores/*.gri',
-                  #'pred/share/results/maps/depth_conversion/*.gri',
-                  'realization-0/pred/share/results/polygons/*--field_outline.csv',
-                  'realization-0/pred/share/results/polygons/*--faultlines.csv',
-                  #'realization-*/pred/share/results/maps/depth/*.gri',
-                  #'realization-*/pred/share/results/maps/isochores/*.gri',
-                  #'realization-0/pred/share/results/maps/fwl/*.gri'
-                  #'realization-0/pred/share/results/maps/depth_conversion/*.gri',
-                  'realization-0/pred/share/results/maps/depth/*.gri',
-                  'realization-0/pred/share/results/maps/isochores/*.gri',
+    subfolders = [f'realization-*/{args.iteration}/share/results/maps_metadata_demo/*depth*.gri',
+                  f'realization-*/{args.iteration}/share/results/polygons_metadata_demo/*.pol',
+                  f'realization-*/{args.iteration}/share/results/maps_metadata_demo/*amplitude*.gri',
+                  #f'{args.iteration}/share/results/maps/depth/*.gri',
+                  #f'{args.iteration}/share/results/maps/isochores/*.gri',
+                  #f'{args.iteration}/share/results/maps/depth_conversion/*.gri',
+                  #f'realization-0/{args.iteration}/share/results/polygons/*--field_outline.csv',
+                  #f'realization-0/{args.iteration}/share/results/polygons/*--faultlines.csv',
+                  #f'realization-*/{args.iteration}/share/results/maps/depth/*.gri',
+                  #f'realization-*/{args.iteration}/share/results/maps/isochores/*.gri',
+                  #f'realization-0/{args.iteration}/share/results/maps/fwl/*.gri'
+                  #f'realization-0/{args.iteration}/share/results/maps/depth_conversion/*.gri',
+                  #f'realization-0/{args.iteration}/share/results/maps/depth/*.gri',
+                  #f'realization-0/{args.iteration}/share/results/maps/isochores/*.gri',
                   ]
 
     sumo_connection = uploader.SumoConnection(env=args.env)
     e = uploader.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
 
+    e.register()
+
     for subfolder in subfolders:
         print('Adding files: {}'.format(subfolder))
         e.add_files(os.path.join(args.casepath, subfolder))
     
-    _t0 = time.perf_counter()
     print(f'{datetime.isoformat(datetime.now())}: Uploading {len(e.files)} files with {args.threads} threads on environment {args.env}')
-    upload_results = e.upload(threads=args.threads, showplot=False)
-    _dt = time.perf_counter() - _t0
-    print(f"Total: {len(e.files)}" \
-        f"\nOK: {len(upload_results.get('ok_uploads'))}" \
-        f"\nFailures: {len(upload_results.get('failed_uploads'))}" \
-        f"\nRejected: {len(upload_results.get('rejected_uploads'))}" \
-        f"\nWall time: {round(_dt,2)} seconds" \
-        )
+    upload_results = e.upload(threads=args.threads)
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('casepath', type=str, help='Absolute path to case root on Scratch')
-    parser.add_argument('--env', type=str, default='dev', help="Which environment to use, default: dev")
+    parser.add_argument('--env', type=str, default='fmu', help="Which environment to use, default: dev")
     parser.add_argument('--threads', type=int, default=4, help="Set number of threads to use. Default: 4.")
+    parser.add_argument('--iteration', type=str, default='iter-0', help="Iteration")
     args = parser.parse_args()
 
-    if args.env not in ['dev', 'test', 'prod', 'exp']:
-        raise ValueError(f'Illegal environment: {args.env}. Valid environments: dev, test, prod, exp')
+    if args.env not in ['dev', 'test', 'prod', 'exp', 'fmu']:
+        raise ValueError(f'Illegal environment: {args.env}. Valid environments: dev, test, prod, exp, fmu')
 
     return args
 
