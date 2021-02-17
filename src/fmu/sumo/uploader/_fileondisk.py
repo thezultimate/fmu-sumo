@@ -80,18 +80,13 @@ class FileOnDisk:
         s = f'\n# {self.__class__}'
         s += f'\n# Disk path: {self.path}'
         s += f'\n# Basename: {self.basename}'
-        s += f'\n# Case name: {self.case_name}'
         s += f'\n# Relative path: {self.filepath_relative_to_case_root}'
         s += f'\n# Byte string length: {len(self.byte_string)}'
-        s += f'\n# Data type: {self.d_type}'
-        s += f'\n# File format: {self.file_format}'
-
+ 
         if self.sumo_child_id is None:
             s += '\n# Not uploaded to Sumo'
         else:
             s += f'\n# Uploaded to Sumo. Sumo_ID: {self.sumo_child_id}'
-
-        s += '\n\n'
 
         return s
 
@@ -187,6 +182,11 @@ class FileOnDisk:
         result = {}
 
         try:
+
+            # We need these included even if returning before blob upload
+            result['blob_file_path'] = self.path
+            result['blob_file_size'] = self.size
+
             response = self._upload_metadata(sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id)
 
             _t1_metadata = time.perf_counter()
@@ -198,10 +198,6 @@ class FileOnDisk:
             result['metadata_upload_time_elapsed'] = _t1_metadata-_t0_metadata
             result['metadata_file_path'] = self.metadata_path
             result['metadata_file_size'] = self.size
-
-            # We need these included even if returning before blob upload
-            result['blob_file_path'] = self.path
-            result['blob_file_size'] = self.size
 
         except TransientError as err:
             result['status'] = 'failed'

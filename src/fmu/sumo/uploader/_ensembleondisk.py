@@ -9,6 +9,8 @@ import pandas as pd
 from fmu.sumo.uploader._fileondisk import FileOnDisk
 from fmu.sumo.uploader._upload_files import upload_files
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 class EnsembleOnDisk:
     """
@@ -161,10 +163,6 @@ class EnsembleOnDisk:
 
         returned_object_id = response.json().get('objectid')
 
-        info = 'Ensemble registered. SumoID: {}'.format(returned_object_id)
-        logging.info(info)
-        print(info)
-
         return returned_object_id
 
     def _get_fmu_ensemble_id(self):
@@ -216,6 +214,9 @@ class EnsembleOnDisk:
             rejected_uploads += upload_results.get('rejected_uploads')
             failed_uploads = upload_results.get('failed_uploads')
 
+            if not failed_uploads:
+                break
+
             files_to_upload = [f.get('file') for f in failed_uploads]
 
             attempts += 1
@@ -255,6 +256,19 @@ class EnsembleOnDisk:
                              f"{u.get('metadata_upload_response_text')}")
                 logging.info(f"Blob: [{u.get('blob_upload_response_status_code')}] "
                              f"{u.get('blob_upload_response_status_text')}")
+
+        if failed_uploads:
+            logging.info(f'\n\n{len(failed_uploads)} files rejected by Sumo. First 5 rejected files:')
+
+            for u in failed_uploads[0:4]:
+                logging.info('\n' + '=' * 50)
+
+                logging.info(f"Filepath: {u.get('blob_file_path')}")
+                logging.info(f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
+                             f"{u.get('metadata_upload_response_text')}")
+                logging.info(f"Blob: [{u.get('blob_upload_response_status_code')}] "
+                             f"{u.get('blob_upload_response_status_text')}")
+
 
         print(f"Total: {len(self.files)}"
               f"\nOK: {len(ok_uploads)}"

@@ -12,7 +12,9 @@ def _upload_file(args):
     file, sumo_connection, sumo_parent_id = args
 
     result = file.upload_to_sumo(sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id)
-    
+
+    result['file'] = file
+
     return result
 
 
@@ -35,7 +37,7 @@ def upload_files(files: list, sumo_parent_id: str, sumo_connection, threads=4):
 
     for r in results:
         status = r.get('status')
-        
+
         if not status:
             raise ValueError('File upload result returned with no "status" attribute')
         
