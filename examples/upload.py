@@ -19,9 +19,11 @@ def main():
     manifest_path = os.path.join(args.casepath, f'{args.iteration}/share/metadata/fmu_ensemble.yml')
 
     # add some files
-    subfolders = [f'realization-*/{args.iteration}/share/results/maps_metadata_demo/*depth*.gri',
-                  f'realization-*/{args.iteration}/share/results/polygons_metadata_demo/*.pol',
-                  f'realization-*/{args.iteration}/share/results/maps_metadata_demo/*amplitude*.gri',
+    subfolders = [f'realization-10/{args.iteration}/share/results/maps_metadata_demo/volon_fm_top--amplitude_max*.gri',
+                  #f'realization-*/{args.iteration}/share/results/polygons_metadata_demo/*.pol',
+                  #f'realization-*/{args.iteration}/share/results/maps_metadata_demo/*amplitude*.gri',
+                  #f'realization-*/{args.iteration}/share/results/tables_metadata_demo/inplace_volumes*.csv',
+
                   #f'{args.iteration}/share/results/maps/depth/*.gri',
                   #f'{args.iteration}/share/results/maps/isochores/*.gri',
                   #f'{args.iteration}/share/results/maps/depth_conversion/*.gri',
@@ -38,12 +40,12 @@ def main():
     sumo_connection = uploader.SumoConnection(env=args.env)
     e = uploader.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
 
-    e.register()
+    #e.register()
 
     for subfolder in subfolders:
         print('Adding files: {}'.format(subfolder))
         e.add_files(os.path.join(args.casepath, subfolder))
-    
+
     print(f'{datetime.isoformat(datetime.now())}: Uploading {len(e.files)} files with {args.threads} threads on environment {args.env}')
     upload_results = e.upload(threads=args.threads)
 

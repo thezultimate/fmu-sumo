@@ -27,6 +27,7 @@ def main():
     e.upload(threads=args.threads, register_ensemble=False)   # registration should have been done by HOOK workflow
 
     # tmp: Let me know that main has finished
+    print(f'Searchpath was: {args.searchpath}')
     print('upload_during_fmu_runs.py:main() has ended')
 
 def parse_arguments():
