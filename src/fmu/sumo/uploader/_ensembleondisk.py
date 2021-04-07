@@ -21,6 +21,7 @@ logger.setLevel(logging.INFO)
 
 # pylint: disable=C0103 # allow non-snake case variable names
 
+
 class EnsembleOnDisk:
     """
     Class to hold information about an ERT run on disk.
@@ -29,7 +30,7 @@ class EnsembleOnDisk:
     as they are stored on the Scratch disk.
 
     An Ensemble in this context is a set of metadata describing this particular ensemble,
-    and an arbitrary number of files belonging to this ensemble. Each file is in reality 
+    and an arbitrary number of files belonging to this ensemble. Each file is in reality
     a file pair, consisting of a data file (could be any file type) and a metadata file
     (yaml formatted, according) to FMU standards.
 
@@ -73,12 +74,12 @@ class EnsembleOnDisk:
         self._files = []
 
     def __str__(self):
-        s = f'{self.__class__}, {len(self._files)} files.'
+        s = f"{self.__class__}, {len(self._files)} files."
 
         if self._sumo_parent_id is not None:
-            s += f'\nInitialized on Sumo. Sumo_ID: {self._sumo_parent_id}'
+            s += f"\nInitialized on Sumo. Sumo_ID: {self._sumo_parent_id}"
         else:
-            s += '\nNot initialized on Sumo.'
+            s += "\nNot initialized on Sumo."
 
         return s
 
@@ -110,47 +111,49 @@ class EnsembleOnDisk:
                 self._files.append(file)
 
             except IOError as err:
-                info = f'{err}. No metadata, skipping file.'
+                info = f"{err}. No metadata, skipping file."
                 warnings.warn(info)
                 print(info)
 
     def _get_sumo_parent_id(self):
         """Call sumo, check if the ensemble is already there. Use fmu_ensemble_id for this."""
-        query = f'fmu.ensemble.id:{self.fmu_ensemble_id}'
+        query = f"fmu.ensemble.id:{self.fmu_ensemble_id}"
         search_results = self.sumo_connection.api.searchroot(query, search_size=2)
 
         # To catch crazy rare situation when index is empty (first upload to new index)
-        if not search_results.get('hits'):
+        if not search_results.get("hits"):
             return None
 
-        hits = search_results.get('hits').get('hits')
+        hits = search_results.get("hits").get("hits")
 
         if len(hits) == 0:
             return None
 
         if len(hits) == 1:
-            sumo_parent_id = hits[0].get('_id')
+            sumo_parent_id = hits[0].get("_id")
             return sumo_parent_id
 
-        raise ValueError(f"More than one hit for fmu_ensemble_id {self.fmu_ensemble_id} found on Sumo")
+        raise ValueError(
+            f"More than one hit for fmu_ensemble_id {self.fmu_ensemble_id} found on Sumo"
+        )
 
     def register(self):
         """
-            Register this ensemble on Sumo.
-            Assumptions: If registering an already existing ensemble, it will be overwritten.
-            ("register" might be a bad word for this...)
+        Register this ensemble on Sumo.
+        Assumptions: If registering an already existing ensemble, it will be overwritten.
+        ("register" might be a bad word for this...)
 
-            Returns:
-                sumo_parent_id (uuid4): Unique ID for this ensemble on Sumo
+        Returns:
+            sumo_parent_id (uuid4): Unique ID for this ensemble on Sumo
         """
-        info = 'Registering ensemble on Sumo'
+        info = "Registering ensemble on Sumo"
         logging.info(info)
         print(info)
 
         sumo_parent_id = self._upload_ensemble_metadata(self.ensemble_metadata)
         self._sumo_parent_id = sumo_parent_id
 
-        info = 'Ensemble registered. SumoID: {}'.format(sumo_parent_id)
+        info = "Ensemble registered. SumoID: {}".format(sumo_parent_id)
         logging.info(info)
         print(info)
 
@@ -160,16 +163,16 @@ class EnsembleOnDisk:
         """Given a ensemble_metadata dict, upload it to Sumo"""
         response = self.sumo_connection.api.save_top_level_json(json=ensemble_metadata)
 
-        returned_object_id = response.json().get('objectid')
+        returned_object_id = response.json().get("objectid")
 
         return returned_object_id
 
     def _get_fmu_ensemble_id(self):
         """Look up and return ensemble_id from ensemble_metadata"""
-        fmu_ensemble_id = self.ensemble_metadata.get('fmu').get('ensemble').get('id')
+        fmu_ensemble_id = self.ensemble_metadata.get("fmu").get("ensemble").get("id")
 
         if not fmu_ensemble_id:
-            raise ValueError('Could not get fmu_ensemble_id from ensemble metadata')
+            raise ValueError("Could not get fmu_ensemble_id from ensemble metadata")
 
         return fmu_ensemble_id
 
@@ -187,16 +190,18 @@ class EnsembleOnDisk:
         """
 
         if self.sumo_parent_id is None:
-            logging.info('Ensemble is not registered on Sumo')
+            logging.info("Ensemble is not registered on Sumo")
 
             if register_ensemble:
                 self.register()
             else:
-                raise IOError('Ensemble is not registered on sumo. ' /
-                            'Set register_ensemble to True if you want to do so.')
+                raise IOError(
+                    "Ensemble is not registered on sumo. "
+                    / "Set register_ensemble to True if you want to do so."
+                )
 
         if not self.files:
-            raise FileExistsError('No files to upload. Check search string.')
+            raise FileExistsError("No files to upload. Check search string.")
 
         ok_uploads = []
         failed_uploads = []
@@ -207,25 +212,33 @@ class EnsembleOnDisk:
         _t0 = time.perf_counter()
 
         while files_to_upload and attempts < max_attempts:
-            upload_results = upload_files(files=files_to_upload, sumo_parent_id=self.sumo_parent_id,
-                                          sumo_connection=self.sumo_connection, threads=threads)
+            upload_results = upload_files(
+                files=files_to_upload,
+                sumo_parent_id=self.sumo_parent_id,
+                sumo_connection=self.sumo_connection,
+                threads=threads,
+            )
 
-            ok_uploads += upload_results.get('ok_uploads')
-            rejected_uploads += upload_results.get('rejected_uploads')
-            failed_uploads = upload_results.get('failed_uploads')
+            ok_uploads += upload_results.get("ok_uploads")
+            rejected_uploads += upload_results.get("rejected_uploads")
+            failed_uploads = upload_results.get("failed_uploads")
 
             if not failed_uploads:
                 break
 
-            files_to_upload = [f.get('file') for f in failed_uploads]
+            files_to_upload = [f.get("file") for f in failed_uploads]
 
             attempts += 1
 
             time.sleep(3)
-            logging.debug('Retrying {} failed uploads after waiting 3 seconds'.format(len(failed_uploads)))
+            logging.debug(
+                "Retrying {} failed uploads after waiting 3 seconds".format(
+                    len(failed_uploads)
+                )
+            )
 
         if files_to_upload:
-            warnings.warn('Stopping after {} attempts'.format(attempts))
+            warnings.warn("Stopping after {} attempts".format(attempts))
 
         _dt = time.perf_counter() - _t0
 
@@ -234,47 +247,64 @@ class EnsembleOnDisk:
             logging.info(upload_statistics)
 
         if failed_uploads:
-            logging.info(f'{len(failed_uploads)} files failed to be uploaded')
+            logging.info(f"{len(failed_uploads)} files failed to be uploaded")
 
             for u in failed_uploads[0:4]:
-                logging.info('\n' + '=' * 50)
+                logging.info("\n" + "=" * 50)
 
                 logging.info(f"Filepath: {u.get('blob_file_path')}")
-                logging.info(f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
-                             f"{u.get('metadata_upload_response_text')}")
-                logging.info(f"Blob: [{u.get('blob_upload_response_status_code')}] "
-                             f"{u.get('blob_upload_response_status_text')}")
+                logging.info(
+                    f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
+                    f"{u.get('metadata_upload_response_text')}"
+                )
+                logging.info(
+                    f"Blob: [{u.get('blob_upload_response_status_code')}] "
+                    f"{u.get('blob_upload_response_status_text')}"
+                )
 
         if rejected_uploads:
-            logging.info(f'\n\n{len(rejected_uploads)} files rejected by Sumo. First 5 rejected files:')
+            logging.info(
+                f"\n\n{len(rejected_uploads)} files rejected by Sumo. First 5 rejected files:"
+            )
 
             for u in rejected_uploads[0:4]:
-                logging.info('\n' + '=' * 50)
+                logging.info("\n" + "=" * 50)
 
                 logging.info(f"Filepath: {u.get('blob_file_path')}")
-                logging.info(f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
-                             f"{u.get('metadata_upload_response_text')}")
-                logging.info(f"Blob: [{u.get('blob_upload_response_status_code')}] "
-                             f"{u.get('blob_upload_response_status_text')}")
+                logging.info(
+                    f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
+                    f"{u.get('metadata_upload_response_text')}"
+                )
+                logging.info(
+                    f"Blob: [{u.get('blob_upload_response_status_code')}] "
+                    f"{u.get('blob_upload_response_status_text')}"
+                )
 
         if failed_uploads:
-            logging.info(f'\n\n{len(failed_uploads)} files rejected by Sumo. First 5 rejected files:')
+            logging.info(
+                f"\n\n{len(failed_uploads)} files rejected by Sumo. First 5 rejected files:"
+            )
 
             for u in failed_uploads[0:4]:
-                logging.info('\n' + '=' * 50)
+                logging.info("\n" + "=" * 50)
 
                 logging.info(f"Filepath: {u.get('blob_file_path')}")
-                logging.info(f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
-                             f"{u.get('metadata_upload_response_text')}")
-                logging.info(f"Blob: [{u.get('blob_upload_response_status_code')}] "
-                             f"{u.get('blob_upload_response_status_text')}")
+                logging.info(
+                    f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
+                    f"{u.get('metadata_upload_response_text')}"
+                )
+                logging.info(
+                    f"Blob: [{u.get('blob_upload_response_status_code')}] "
+                    f"{u.get('blob_upload_response_status_text')}"
+                )
 
-
-        print(f"Total: {len(self.files)}"
-              f"\nOK: {len(ok_uploads)}"
-              f"\nFailures: {len(failed_uploads)}"
-              f"\nRejected: {len(rejected_uploads)}"
-              f"\nWall time: {_dt} seconds")
+        print(
+            f"Total: {len(self.files)}"
+            f"\nOK: {len(ok_uploads)}"
+            f"\nFailures: {len(failed_uploads)}"
+            f"\nRejected: {len(rejected_uploads)}"
+            f"\nWall time: {_dt} seconds"
+        )
 
         return ok_uploads
 
@@ -283,9 +313,9 @@ def _load_ensemble_metadata(ensemble_metadata_path: str):
     """Given ensemble_metadata path, load the yaml file from disk, return dict"""
 
     if not os.path.isfile(ensemble_metadata_path):
-        raise IOError('Manifest file does not exist: {}'.format(ensemble_metadata_path))
+        raise IOError("Manifest file does not exist: {}".format(ensemble_metadata_path))
 
-    with open(ensemble_metadata_path, 'r') as stream:
+    with open(ensemble_metadata_path, "r") as stream:
         yaml_data = yaml.safe_load(stream)
 
     return yaml_data
@@ -296,11 +326,11 @@ def _find_file_paths(search_string):
     files = [f for f in glob.glob(search_string) if os.path.isfile(f)]
 
     if len(files) == 0:
-        info = 'No files found! Please, check the search string.'
+        info = "No files found! Please, check the search string."
         warnings.warn(info)
         print(info)
 
-        info = 'Search string: {}'.format(search_string)
+        info = "Search string: {}".format(search_string)
         warnings.warn(info)
         print(info)
 
@@ -315,21 +345,20 @@ def _calculate_upload_stats(uploads):
     df = pd.DataFrame().from_dict(uploads)
 
     stats = {
-        'blob': {
-            'upload_time': {
-                'mean': df['blob_upload_time_elapsed'].mean(),
-                'max': df['blob_upload_time_elapsed'].max(),
-                'min': df['blob_upload_time_elapsed'].min(),
-                'std': df['blob_upload_time_elapsed'].std(),
+        "blob": {
+            "upload_time": {
+                "mean": df["blob_upload_time_elapsed"].mean(),
+                "max": df["blob_upload_time_elapsed"].max(),
+                "min": df["blob_upload_time_elapsed"].min(),
+                "std": df["blob_upload_time_elapsed"].std(),
             },
         },
-
-        'metadata': {
-            'upload_time': {
-                'mean': df['metadata_upload_time_elapsed'].mean(),
-                'max': df['metadata_upload_time_elapsed'].max(),
-                'min': df['metadata_upload_time_elapsed'].min(),
-                'std': df['metadata_upload_time_elapsed'].std(),
+        "metadata": {
+            "upload_time": {
+                "mean": df["metadata_upload_time_elapsed"].mean(),
+                "max": df["metadata_upload_time_elapsed"].max(),
+                "min": df["metadata_upload_time_elapsed"].min(),
+                "std": df["metadata_upload_time_elapsed"].std(),
             },
         },
     }
