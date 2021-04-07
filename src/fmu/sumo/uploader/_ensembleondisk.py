@@ -1,9 +1,16 @@
+"""
+
+    The EnsembleOnDisk class objectifies an FMU ensemble (results) as it appears on the disk.
+
+"""
+
 import os
 import glob
-import yaml
 import time
 import logging
 import warnings
+
+import yaml
 import pandas as pd
 
 from fmu.sumo.uploader._fileondisk import FileOnDisk
@@ -11,6 +18,8 @@ from fmu.sumo.uploader._upload_files import upload_files
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+# pylint: disable=C0103 # allow non-snake case variable names
 
 class EnsembleOnDisk:
     """
@@ -20,9 +29,9 @@ class EnsembleOnDisk:
     as they are stored on the Scratch disk.
 
     An Ensemble in this context is a set of metadata describing this particular ensemble,
-    and an arbitrary number of files belonging to this ensemble. Each file is in reality a file pair,
-    consisting of a data file (could be any file type) and a metadata file (yaml formatted, according)
-    to FMU standards.
+    and an arbitrary number of files belonging to this ensemble. Each file is in reality 
+    a file pair, consisting of a data file (could be any file type) and a metadata file
+    (yaml formatted, according) to FMU standards.
 
     Example for initialization:
         >>> from fmu import sumo
@@ -32,7 +41,9 @@ class EnsembleOnDisk:
         >>> search_path = 'path/to/search_path/'
 
         >>> sumo_connection = sumo.SumoConnection(env=env)
-        >>> e = sumo.EnsembleOnDisk(ensemble_metadata_path=ensemble_metadata_path, sumo_connection=sumo_connection)
+        >>> e = sumo.EnsembleOnDisk(
+                ensemble_metadata_path=ensemble_metadata_path,
+                sumo_connection=sumo_connection)
 
         After initialization, files must be explicitly indexed into the EnsembleOnDisk object:
 
@@ -43,7 +54,7 @@ class EnsembleOnDisk:
         >>> e.upload()
 
     Args:
-        ensemble_metadata_path (str): Absolute (full) path to the ensemble_metadata file for the ensemble
+        ensemble_metadata_path (str): Path to the ensemble_metadata file for the ensemble
         sumo_connection (fmu.sumo.SumoConnection): SumoConnection object
 
 
@@ -69,27 +80,24 @@ class EnsembleOnDisk:
         else:
             s += '\nNot initialized on Sumo.'
 
-        s += '\nFMU case name: {}'.format(self.case_name)
-
         return s
 
     def __repr__(self):
         return str(self.__str__)
 
     @property
-    def case_name(self):
-        return self.ensemble_metadata.get('case')
-
-    @property
     def sumo_parent_id(self):
+        """Return the sumo parent ID"""
         return self._sumo_parent_id
 
     @property
     def fmu_ensemble_id(self):
+        """Return the fmu_ensemble_id"""
         return self._fmu_ensemble_id
 
     @property
     def files(self):
+        """Return the files"""
         return self._files
 
     def add_files(self, search_string):
@@ -108,7 +116,7 @@ class EnsembleOnDisk:
 
     def _get_sumo_parent_id(self):
         """Call sumo, check if the ensemble is already there. Use fmu_ensemble_id for this."""
-        query = f'fmu_ensemble_id:{self.fmu_ensemble_id}'
+        query = f'fmu.ensemble.id:{self.fmu_ensemble_id}'
         search_results = self.sumo_connection.api.searchroot(query, search_size=2)
 
         # To catch crazy rare situation when index is empty (first upload to new index)
@@ -120,13 +128,15 @@ class EnsembleOnDisk:
         if len(hits) == 0:
             return None
 
-        elif len(hits) == 1:
+        if len(hits) == 1:
             sumo_parent_id = hits[0].get('_id')
             return sumo_parent_id
 
+        raise ValueError(f"More than one hit for fmu_ensemble_id {self.fmu_ensemble_id} found on Sumo")
+
     def register(self):
         """
-            Register this ensemble on Sumo. 
+            Register this ensemble on Sumo.
             Assumptions: If registering an already existing ensemble, it will be overwritten.
             ("register" might be a bad word for this...)
 
@@ -167,7 +177,7 @@ class EnsembleOnDisk:
         """
         Trigger upload of files in this ensemble.
 
-            Get sumo_parent_id. If None, ensemble is not registered on Sumo. Must be registered first.
+            Get sumo_parent_id. If None, ensemble is not registered on Sumo.
 
             Upload all indexed files. Collect the files that have been uploaded OK, the
             ones that have failed and the ones that have been rejected.
@@ -182,7 +192,8 @@ class EnsembleOnDisk:
             if register_ensemble:
                 self.register()
             else:
-                raise IOError('Ensemble is not registered on sumo. Set register_ensemble to True if you want to do so.')
+                raise IOError('Ensemble is not registered on sumo. ' /
+                            'Set register_ensemble to True if you want to do so.')
 
         if not self.files:
             raise FileExistsError('No files to upload. Check search string.')
@@ -218,7 +229,7 @@ class EnsembleOnDisk:
 
         _dt = time.perf_counter() - _t0
 
-        if len(ok_uploads):
+        if len(ok_uploads) > 0:
             upload_statistics = _calculate_upload_stats(ok_uploads)
             logging.info(upload_statistics)
 

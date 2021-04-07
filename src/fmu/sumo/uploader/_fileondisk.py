@@ -1,11 +1,21 @@
-import yaml
+"""
+
+    The FileOnDisk class objectifies a file as it appears
+    on the disk. A file in this context refers to a data/metadata
+    pair (technically two files).
+
+"""
+
 import os
 import datetime
 import time
 import logging
 
+import yaml
+
 from sumo.wrapper._request_error import AuthenticationError, TransientError, PermanentError
 
+# pylint: disable=C0103 # allow non-snake case variable names
 
 def path_to_yaml_path(path):
     """
@@ -21,9 +31,7 @@ def path_to_yaml_path(path):
 
 
 def parse_yaml(path):
-    if not os.path.isfile(path):
-        raise IOError(f'File does not exist: {path}')
-
+    """From path, parse file as yaml, return data"""
     with open(path, 'r') as stream:
         data = yaml.safe_load(stream)
 
@@ -55,19 +63,16 @@ class FileOnDisk:
         """
         self.metadata_path = metadata_path if metadata_path else path_to_yaml_path(path)
         self.path = os.path.abspath(path)
-        self._metadata = parse_yaml(self.metadata_path)
-        self._byte_string = file_to_byte_string(path)
+        self.metadata = parse_yaml(self.metadata_path)
+        self.byte_string = file_to_byte_string(path)
 
         self._size = None
-        self._d_type = None
-        self._case_name = None
-        self._basename = os.path.basename(self.path)
-        self._dir_name = os.path.dirname(self.path)
+        self.basename = os.path.basename(self.path)
+        self.dir_name = os.path.dirname(self.path)
         self._file_format = None
 
-        self._sumo_child_id = None
-        self._sumo_parent_id = None
-        self._sumo_blob_id = None
+        self.sumo_object_id = None
+        self.sumo_parent_id = None
 
     def __repr__(self):
         if not self.metadata:
@@ -78,24 +83,12 @@ class FileOnDisk:
         s += f'\n# Basename: {self.basename}'
         s += f'\n# Byte string length: {len(self.byte_string)}'
  
-        if self.sumo_child_id is None:
+        if self.sumo_object_id is None:
             s += '\n# Not uploaded to Sumo'
         else:
-            s += f'\n# Uploaded to Sumo. Sumo_ID: {self.sumo_child_id}'
+            s += f'\n# Uploaded to Sumo. Sumo_ID: {self.sumo_object_id}'
 
         return s
-
-    @property
-    def sumo_parent_id(self):
-        return self._sumo_parent_id
-
-    @property
-    def sumo_child_id(self):
-        return self._sumo_child_id
-
-    @property
-    def sumo_blob_id(self):
-        return self._sumo_blob_id
 
     @property
     def size(self):
@@ -104,22 +97,6 @@ class FileOnDisk:
             self._size = os.path.getsize(self.path)
 
         return self._size
-
-    @property
-    def basename(self):
-        return self._basename
-
-    @property
-    def dir_name(self):
-        return self._dir_name
-
-    @property
-    def metadata(self):
-        return self._metadata
-
-    @property
-    def byte_string(self):
-        return self._byte_string
 
     def _upload_metadata(self, sumo_connection, sumo_parent_id):
         response = sumo_connection.api.save_child_level_json(json=self.metadata, parent_id=sumo_parent_id)
@@ -174,8 +151,8 @@ class FileOnDisk:
             result['metadata_upload_response_text'] = err.message
             return result
 
-        self._sumo_parent_id = sumo_parent_id
-        self._sumo_child_id = response.json().get('objectid')
+        self.sumo_parent_id = sumo_parent_id
+        self.sumo_object_id = response.json().get('objectid')
 
         blob_url = response.json().get('blob_url')
 
@@ -184,7 +161,7 @@ class FileOnDisk:
 
         try:
             response = self._upload_byte_string(sumo_connection=sumo_connection,
-                                                object_id=self._sumo_child_id, blob_url=blob_url)
+                                                object_id=self.sumo_object_id, blob_url=blob_url)
         except OSError as err:
             logging.info(f'Upload failed: {err}')
             result['status'] = 'failed'
