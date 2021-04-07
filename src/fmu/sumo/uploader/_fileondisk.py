@@ -63,15 +63,11 @@ class FileOnDisk:
         self._case_name = None
         self._basename = None
         self._dir_name = None
-        self._filepath_relative_to_case_root = None
         self._file_format = None
 
         self._sumo_child_id = None
         self._sumo_parent_id = None
         self._sumo_blob_id = None
-
-        self._metadata['created_datetime'] = _datetime_now()
-        self._metadata['fmu_file']['relative_path'] = self.filepath_relative_to_case_root
 
     def __repr__(self):
         if not self.metadata:
@@ -80,7 +76,6 @@ class FileOnDisk:
         s = f'\n# {self.__class__}'
         s += f'\n# Disk path: {self.path}'
         s += f'\n# Basename: {self.basename}'
-        s += f'\n# Relative path: {self.filepath_relative_to_case_root}'
         s += f'\n# Byte string length: {len(self.byte_string)}'
  
         if self.sumo_child_id is None:
@@ -101,13 +96,6 @@ class FileOnDisk:
     @property
     def sumo_blob_id(self):
         return self._sumo_blob_id
-
-    @property
-    def filepath_relative_to_case_root(self):
-        if self._filepath_relative_to_case_root is None:
-            self._filepath_relative_to_case_root = self._get_filepath_relative_to_case_root()
-
-        return self._filepath_relative_to_case_root
 
     @property
     def size(self):
@@ -138,29 +126,6 @@ class FileOnDisk:
     @property
     def byte_string(self):
         return self._byte_string
-
-    def _get_filepath_relative_to_case_root(self):
-        """
-            Derive the local filepath (relative to runpath) from the absolute path.
-            The purpose of including this is first and foremost to retain the
-            information about relative location, as much current logic is built on
-            this. This enables this logic to be used when getting data through API
-            also. Also, Sumo uses this attribute coupled with the fmu_ensemble_id to
-            create a unique object ID for this file when uploaded.
-
-        """
-
-        # earlier attempts detected the case name, but this failed when someone used symlinks...
-        # So implementing this somewhat shaky solution, looking first for realization. If
-        # not found, look for "share/results"
-       
-        if 'realization' in self.path:
-            return os.path.join('realization' + self.path.split('realization')[-1])
-
-        if not 'share/results/' in self.path:
-            raise ValueError(f'Expected to see "share/results/" in this path: {self.path}')
-        
-        return os.path.join('share/results/', self.path.split('share/results/')[-1])
 
     def _upload_metadata(self, sumo_connection, sumo_parent_id):
         response = sumo_connection.api.save_child_level_json(json=self.metadata, parent_id=sumo_parent_id)
