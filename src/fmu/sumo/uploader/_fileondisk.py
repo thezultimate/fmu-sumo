@@ -61,8 +61,8 @@ class FileOnDisk:
         self._size = None
         self._d_type = None
         self._case_name = None
-        self._basename = None
-        self._dir_name = None
+        self._basename = os.path.basename(self.path)
+        self._dir_name = os.path.dirname(self.path)
         self._file_format = None
 
         self._sumo_child_id = None
@@ -107,16 +107,10 @@ class FileOnDisk:
 
     @property
     def basename(self):
-        if not self._basename:
-            self._basename = os.path.basename(self.path)
-
         return self._basename
 
     @property
     def dir_name(self):
-        if not self._dir_name:
-            self._dir_name = os.path.dirname(self.path)
-
         return self._dir_name
 
     @property

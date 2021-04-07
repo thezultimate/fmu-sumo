@@ -57,9 +57,8 @@ class EnsembleOnDisk:
         self.sumo_connection = sumo_connection
 
         self.ensemble_metadata = _load_ensemble_metadata(ensemble_metadata_path)
-        self._fmu_ensemble_id = None
-        self._sumo_parent_id = None
-        self._on_sumo = None
+        self._fmu_ensemble_id = self._get_fmu_ensemble_id()
+        self._sumo_parent_id = self._get_sumo_parent_id()
         self._files = []
 
     def __str__(self):
@@ -83,16 +82,10 @@ class EnsembleOnDisk:
 
     @property
     def sumo_parent_id(self):
-        if self._sumo_parent_id is None:
-            self._sumo_parent_id = self._get_sumo_parent_id()
-
         return self._sumo_parent_id
 
     @property
     def fmu_ensemble_id(self):
-        if self._fmu_ensemble_id is None:
-            self._fmu_ensemble_id = self._get_fmu_ensemble_id()
-
         return self._fmu_ensemble_id
 
     @property
@@ -163,7 +156,7 @@ class EnsembleOnDisk:
 
     def _get_fmu_ensemble_id(self):
         """Look up and return ensemble_id from ensemble_metadata"""
-        fmu_ensemble_id = self.ensemble_metadata.get('fmu_ensemble_id')
+        fmu_ensemble_id = self.ensemble_metadata.get('fmu').get('ensemble').get('id')
 
         if not fmu_ensemble_id:
             raise ValueError('Could not get fmu_ensemble_id from ensemble metadata')
