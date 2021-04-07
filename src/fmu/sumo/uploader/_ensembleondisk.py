@@ -19,7 +19,7 @@ class EnsembleOnDisk:
     The EnsembleOnDisk object is a representation of files belonging to an ERT ensemble,
     as they are stored on the Scratch disk.
 
-    An Ensemble in this context is a set of metadata describing this particular ensemble (manifest),
+    An Ensemble in this context is a set of metadata describing this particular ensemble,
     and an arbitrary number of files belonging to this ensemble. Each file is in reality a file pair,
     consisting of a data file (could be any file type) and a metadata file (yaml formatted, according)
     to FMU standards.
@@ -28,11 +28,11 @@ class EnsembleOnDisk:
         >>> from fmu import sumo
 
         >>> env = 'dev'
-        >>> manifest_path = 'path/to/ensemble_manifest.yaml'
+        >>> ensemble_metadata_path = 'path/to/ensemble_metadata.yaml'
         >>> search_path = 'path/to/search_path/'
 
         >>> sumo_connection = sumo.SumoConnection(env=env)
-        >>> e = sumo.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
+        >>> e = sumo.EnsembleOnDisk(ensemble_metadata_path=ensemble_metadata_path, sumo_connection=sumo_connection)
 
         After initialization, files must be explicitly indexed into the EnsembleOnDisk object:
 
@@ -43,20 +43,20 @@ class EnsembleOnDisk:
         >>> e.upload()
 
     Args:
-        manifest_path (str): Absolute (full) path to the manifest file for the ensemble
+        ensemble_metadata_path (str): Absolute (full) path to the ensemble_metadata file for the ensemble
         sumo_connection (fmu.sumo.SumoConnection): SumoConnection object
 
 
     """
 
-    def __init__(self, manifest_path: str, sumo_connection):
+    def __init__(self, ensemble_metadata_path: str, sumo_connection):
         """
-        manifest_path (str): Path to manifest for ensemble
+        ensemble_metadata_path (str): Path to ensemble_metadata for ensemble
         api (SumoConnection instance): Connection to Sumo.
         """
         self.sumo_connection = sumo_connection
 
-        self._manifest = _load_manifest(manifest_path)
+        self.ensemble_metadata = _load_ensemble_metadata(ensemble_metadata_path)
         self._fmu_ensemble_id = None
         self._sumo_parent_id = None
         self._on_sumo = None
@@ -78,12 +78,8 @@ class EnsembleOnDisk:
         return str(self.__str__)
 
     @property
-    def manifest(self):
-        return self._manifest
-
-    @property
     def case_name(self):
-        return self._manifest.get('case')
+        return self.ensemble_metadata.get('case')
 
     @property
     def sumo_parent_id(self):
@@ -120,7 +116,7 @@ class EnsembleOnDisk:
     def _get_sumo_parent_id(self):
         """Call sumo, check if the ensemble is already there. Use fmu_ensemble_id for this."""
         query = f'fmu_ensemble_id:{self.fmu_ensemble_id}'
-        search_results = self.sumo_connection.api.searchroot(query, select='source', buckets='source')
+        search_results = self.sumo_connection.api.searchroot(query, search_size=2)
 
         # To catch crazy rare situation when index is empty (first upload to new index)
         if not search_results.get('hits'):
@@ -148,7 +144,7 @@ class EnsembleOnDisk:
         logging.info(info)
         print(info)
 
-        sumo_parent_id = self._upload_manifest(self.manifest)
+        sumo_parent_id = self._upload_ensemble_metadata(self.ensemble_metadata)
         self._sumo_parent_id = sumo_parent_id
 
         info = 'Ensemble registered. SumoID: {}'.format(sumo_parent_id)
@@ -157,17 +153,17 @@ class EnsembleOnDisk:
 
         return sumo_parent_id
 
-    def _upload_manifest(self, manifest: dict):
-        """Given a manifest dict, upload it to Sumo"""
-        response = self.sumo_connection.api.save_top_level_json(json=manifest)
+    def _upload_ensemble_metadata(self, ensemble_metadata: dict):
+        """Given a ensemble_metadata dict, upload it to Sumo"""
+        response = self.sumo_connection.api.save_top_level_json(json=ensemble_metadata)
 
         returned_object_id = response.json().get('objectid')
 
         return returned_object_id
 
     def _get_fmu_ensemble_id(self):
-        """Look up and return ensemble_id from manifest"""
-        fmu_ensemble_id = self.manifest.get('fmu_ensemble_id')
+        """Look up and return ensemble_id from ensemble_metadata"""
+        fmu_ensemble_id = self.ensemble_metadata.get('fmu_ensemble_id')
 
         if not fmu_ensemble_id:
             raise ValueError('Could not get fmu_ensemble_id from ensemble metadata')
@@ -279,13 +275,13 @@ class EnsembleOnDisk:
         return ok_uploads
 
 
-def _load_manifest(manifest_path: str):
-    """Given manifest path, load the yaml file from disk, return dict"""
+def _load_ensemble_metadata(ensemble_metadata_path: str):
+    """Given ensemble_metadata path, load the yaml file from disk, return dict"""
 
-    if not os.path.isfile(manifest_path):
-        raise IOError('Manifest file does not exist: {}'.format(manifest_path))
+    if not os.path.isfile(ensemble_metadata_path):
+        raise IOError('Manifest file does not exist: {}'.format(ensemble_metadata_path))
 
-    with open(manifest_path, 'r') as stream:
+    with open(ensemble_metadata_path, 'r') as stream:
         yaml_data = yaml.safe_load(stream)
 
     return yaml_data

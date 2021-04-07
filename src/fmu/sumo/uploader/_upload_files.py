@@ -20,7 +20,7 @@ def _upload_file(args):
 
 def upload_files(files: list, sumo_parent_id: str, sumo_connection, threads=4):
     """
-        Upload files, including JSON/manifest, to specified ensemble
+        Upload files
 
         files: list of FileOnDisk objects
         sumo_parent_id: sumo_parent_id for the parent ensemble
