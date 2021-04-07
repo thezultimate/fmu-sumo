@@ -196,8 +196,8 @@ class EnsembleOnDisk:
                 self.register()
             else:
                 raise IOError(
-                    "Ensemble is not registered on sumo. "
-                    / "Set register_ensemble to True if you want to do so."
+                    "Ensemble is not registered on sumo. " \
+                    "Set register_ensemble to True if you want to do so."
                 )
 
         if not self.files:
