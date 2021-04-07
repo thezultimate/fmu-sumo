@@ -196,7 +196,7 @@ class EnsembleOnDisk:
                 self.register()
             else:
                 raise IOError(
-                    "Ensemble is not registered on sumo. " \
+                    "Ensemble is not registered on sumo. "
                     "Set register_ensemble to True if you want to do so."
                 )
 
@@ -313,7 +313,7 @@ def _load_ensemble_metadata(ensemble_metadata_path: str):
     """Given ensemble_metadata path, load the yaml file from disk, return dict"""
 
     if not os.path.isfile(ensemble_metadata_path):
-        raise IOError("Manifest file does not exist: {}".format(ensemble_metadata_path))
+        raise IOError(f"ensemble metadata not found: {ensemble_metadata_path}")
 
     with open(ensemble_metadata_path, "r") as stream:
         yaml_data = yaml.safe_load(stream)
@@ -330,7 +330,7 @@ def _find_file_paths(search_string):
         warnings.warn(info)
         print(info)
 
-        info = "Search string: {}".format(search_string)
+        info = f"Search string: {search_string}"
         warnings.warn(info)
         print(info)
 
