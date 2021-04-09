@@ -82,10 +82,10 @@ class FileOnDisk:
         self.sumo_parent_id = None
 
         # insert sumo-specific metadata attributes
-        self._metadata['_sumo'] = {}
-        self._metadata['_sumo']['blob_size'] = len(self._byte_string)
-        digester = hashlib.md5(self._byte_string)
-        self._metadata['_sumo']['blob_md5'] = base64.b64encode(digester.digest())
+        self.metadata['_sumo'] = {}
+        self.metadata['_sumo']['blob_size'] = len(self.byte_string)
+        digester = hashlib.md5(self.byte_string)
+        self.metadata['_sumo']['blob_md5'] = base64.b64encode(digester.digest())
 
     def __repr__(self):
         if not self.metadata:
