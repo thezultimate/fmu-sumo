@@ -16,10 +16,10 @@ def main():
     """Script for uploading data to Sumo"""
 
     args = parse_arguments()
-    manifest_path = os.path.join(args.casepath, f'{args.iteration}/share/metadata/fmu_ensemble.yml')
+    ensemble_metadata_path = os.path.join(args.casepath, f'{args.iteration}/share/metadata/fmu_ensemble.yml')
 
     # add some files
-    subfolders = [f'realization-10/{args.iteration}/share/results/maps_metadata_demo/volon_fm_top--amplitude_max*.gri',
+    subfolders = [f'realization-0/{args.iteration}/share/results/maps/*.gri',
                   #f'realization-*/{args.iteration}/share/results/polygons_metadata_demo/*.pol',
                   #f'realization-*/{args.iteration}/share/results/maps_metadata_demo/*amplitude*.gri',
                   #f'realization-*/{args.iteration}/share/results/tables_metadata_demo/inplace_volumes*.csv',
@@ -38,9 +38,9 @@ def main():
                   ]
 
     sumo_connection = uploader.SumoConnection(env=args.env)
-    e = uploader.EnsembleOnDisk(manifest_path=manifest_path, sumo_connection=sumo_connection)
+    e = uploader.EnsembleOnDisk(ensemble_metadata_path=ensemble_metadata_path, sumo_connection=sumo_connection)
 
-    #e.register()
+    e.register()
 
     for subfolder in subfolders:
         print('Adding files: {}'.format(subfolder))
