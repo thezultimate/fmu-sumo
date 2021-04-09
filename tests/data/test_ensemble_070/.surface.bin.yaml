@@ -1,5 +1,4 @@
 # example YAML file for surfaces (a child object in Sumo)
-
 $schema: https://main-fmu-schemas-dev.radix.equinor.com/schemas/0.7.0/fmu_results.json
 $version: "0.7.0" # including for REP and others to build logic on.
 $source: fmu  # always included, and always this value if FMU made it. For quick identification for external consumers.
@@ -39,12 +38,12 @@ fmu:
       - SENSNAME: faultseal
       - SENSCASE: low
       - RMS_SEED: 1006
-      - KVKH_CHANNEL: 0.6
-      - KVKH_CREVASSE: 0.3
-      - KVKH_LS: 0.7
-      - KVKH_US: 0.6
-      - FAULT_SEAL_SCALING: 0.1
-      - FWL_CENTRAL: 1677
+    #  - TESTING_TESTING: 0.2
+    #  - KVKH_CHANNEL: 0.6
+    #  - KVKH_LS: 0.7
+    # - KVKH_US: 0.6
+    #  - FAULT_SEAL_SCALING: 0.1
+    #  - FWL_CENTRAL: 1677
 
   # If aggregation is present, realization is not present.
   # If aggregation is present, this is recording an aggregation across different
@@ -120,7 +119,7 @@ data:
     yinc: 25.0
     yflip: 1
     rotation: 30.000000834826057
-    undef: 1.0e+33  # Allow both number and string
+    undef: 1.0E+33  # Allow both number and string
   bbox:
     xmin: 456012.5003497944
     xmax: 467540.52762886323

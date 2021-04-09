@@ -29,10 +29,10 @@ fmu:
 
   ensemble:
     case:
-      name: MyCaseName
+      name: TESTCASE
       id: 44cd1b84-766f-4c93-9050-g921861d9420   # to identify ensembles belonging to the same case, see issue
     user:
-      user_id: jriv
+      user_id: testuser
     iteration: "0"  # expanded to "iteration" and changed to string
     id: 15ce3b84-766f-4c93-9050-b154861f9100  # ensemble ID for this ensemble
     restart_from: 15ce3b84-766f-4c93-9050-b154861f9100   # ensemble ID for another ensemble
