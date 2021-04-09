@@ -10,6 +10,8 @@ import os
 import datetime
 import time
 import logging
+import hashlib
+import base64
 
 import yaml
 
@@ -78,6 +80,12 @@ class FileOnDisk:
 
         self.sumo_object_id = None
         self.sumo_parent_id = None
+
+        # insert sumo-specific metadata attributes
+        self._metadata['_sumo'] = {}
+        self._metadata['_sumo']['blob_size'] = len(self._byte_string)
+        digester = hashlib.md5(self._byte_string)
+        self._metadata['_sumo']['blob_md5'] = base64.b64encode(digester.digest())
 
     def __repr__(self):
         if not self.metadata:
