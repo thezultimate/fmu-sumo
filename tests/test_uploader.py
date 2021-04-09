@@ -13,14 +13,13 @@ def test_uploader():
     #raise NotImplementedError('Must be refactored for Drogon')
 
     ensemble_metadata_path = 'data/test_ensemble_070/ensemble.yaml'
-    search_path = 'data/test_ensemble_070/'
-    env = 'dev'
+    env = 'fmu'
     threads = 1
 
     sumo_connection = uploader.SumoConnection(env=env)
     e = uploader.EnsembleOnDisk(ensemble_metadata_path=ensemble_metadata_path, sumo_connection=sumo_connection)
     with pytest.warns(UserWarning) as warnings_record:  # testdata contains one file with missing metadata
-        e.add_files(search_path + '/*.bin')
+        e.add_files('data/test_ensemble_070/*.bin')
 
     with pytest.raises(IOError):
         # assert that uploading withouth registering fails
