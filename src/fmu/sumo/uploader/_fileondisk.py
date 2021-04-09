@@ -3,8 +3,6 @@ import os
 import datetime
 import time
 import logging
-import hashlib
-import base64
 
 from sumo.wrapper._request_error import AuthenticationError, TransientError, PermanentError
 
@@ -75,13 +73,6 @@ class FileOnDisk:
         self._metadata['datetime'] = _datetime_now()
         self._metadata['data']['relative_file_path'] = self.filepath_relative_to_case_root
 
-        self._metadata['_sumo'] = {}
-        self._metadata['_sumo']['blob_size'] = len(self._byte_string)
-        digester = hashlib.md5(self._byte_string)
-        self._metadata['_sumo']['blob_md5'] = base64.b64encode(digester.digest())
-
-
-
     def __repr__(self):
         if not self.metadata:
             return f'\n# {self.__class__} \n# No metadata'
@@ -94,9 +85,6 @@ class FileOnDisk:
         s += f'\n# Byte string length: {len(self.byte_string)}'
         s += f'\n# Data type: {self.d_type}'
         s += f'\n# File format: {self.file_format}'
-        s += f'\n# File size: {self._metadata["_sumo"]["blob_size"]}'
-        s += f'\n# File size: {self._metadata["_sumo"]["blob_md5"]}'
-
 
         if self.sumo_child_id is None:
             s += '\n# Not uploaded to Sumo'
