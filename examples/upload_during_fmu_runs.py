@@ -14,11 +14,15 @@ def main():
 
     args = parse_arguments()
 
+    print('\n\n =======')
+    print(f'searchpath: {args.searchpath}')
+    print('\n\n =======\n')
+
     # establish the connection
     sumo_connection = uploader.SumoConnection(env=args.env)
 
     # initiate the ensemble on disk object
-    e = uploader.EnsembleOnDisk(manifest_path=args.manifest_path, sumo_connection=sumo_connection)
+    e = uploader.EnsembleOnDisk(ensemble_metadata_path=args.ensemble_metadata_path, sumo_connection=sumo_connection)
 
     # add files to the ensemble on disk object
     e.add_files(os.path.join(args.searchpath))
@@ -42,7 +46,7 @@ def parse_arguments():
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('manifest_path', type=str, help='Absolute path to run manifest')
+    parser.add_argument('ensemble_metadata_path', type=str, help='Absolute path to run ensemble_metadata')
     parser.add_argument('searchpath', type=str, help='Globable search path for files to upload')
     parser.add_argument('env', type=str, help="Which environment to use.")
     parser.add_argument('threads', type=int, help="Set number of threads to use.")
