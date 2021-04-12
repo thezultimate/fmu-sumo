@@ -50,7 +50,7 @@ def parse_arguments():
     parser.add_argument('threads', type=int, help="Set number of threads to use.")
     args = parser.parse_args()
 
-    if args.env not in ['dev', 'test', 'prod', 'exp', 'fmu']:
+    if args.env not in ['dev', 'test', 'prod', 'exp', 'fmu', 'preview']:
         raise ValueError(f'Illegal environment: {args.env}. Valid environments: dev, test, prod, exp, fmu')
 
     return args
