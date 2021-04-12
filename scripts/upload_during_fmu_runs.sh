@@ -15,9 +15,9 @@ source $1
 #env | sort
 
 # run script with arguments
-python bin/fmu-sumo/examples/upload_during_fmu_runs.py "$2" "$3" "$4" "$5"  >> sumo_upload.log 2>&1
+python bin/fmu-sumo/scripts/upload_during_fmu_runs.py "$2" "$3" "$4" "$5"  >> sumo_upload.log 2>&1
 
-#echo bin/sumo/examples/upload_during_fmu_runs.py "$2" "$3" "$4" "$5"
+#echo bin/sumo/scripts/upload_during_fmu_runs.py "$2" "$3" "$4" "$5"
 
 # let me know if python script has finished
 echo "** DONE UPLOADING!"

@@ -3,5 +3,5 @@
 STDERR sumo_upload.stderr
 STDOUT sumo_upload.stdout
 
-EXECUTABLE  ../../../bin/fmu-sumo/examples/upload_during_fmu_runs.sh
+EXECUTABLE  ../../../bin/fmu-sumo/scripts/upload_during_fmu_runs.sh
 ARGLIST     <virtual_env> <ensemble_metadata_path> <searchpath> <env> <threads>
