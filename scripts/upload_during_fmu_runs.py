@@ -1,11 +1,9 @@
+import os
 import argparse
 from fmu.sumo import uploader
-import os
 
 """
-        Script for uploading to Sumo intended to be run as part of FMU worflow on Johan Sverdrup
-        
-        This is the Python script called by the shell script called by the ERT FORWARD_JOB
+        Script for uploading to Sumo intended to be run as part of FMU worflow.
 
 """
 
