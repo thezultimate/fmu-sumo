@@ -88,6 +88,13 @@ class FileOnDisk:
             "utf-8"
         )
 
+
+        self._metadata['_sumo'] = {}
+        self._metadata['_sumo']['blob_size'] = len(self._byte_string)
+        digester = hashlib.md5(self._byte_string)
+        self._metadata['_sumo']['blob_md5'] = base64.b64encode(digester.digest()).decode("utf-8") 
+
+
     def __repr__(self):
         if not self.metadata:
             return f"\n# {self.__class__} \n# No metadata"
