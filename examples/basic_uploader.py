@@ -1,6 +1,12 @@
 """
-    This script should upload an ensemble with at least two children to sumo using the python wrapper.
-    Stored ensemble must be deleted afterwards.
+
+This is a command-line example script for uploading data to Sumo in an FMU setting.
+
+Usage:
+
+  > python basic_uploader.py <ensemble_metadata_path> <search_path> [env] [threads]
+
+
 """
 import os
 import sys
@@ -13,7 +19,7 @@ def main():
     sumo_connection = uploader.SumoConnection(env=args.env)
     e = uploader.EnsembleOnDisk(
         ensemble_metadata_path=args.ensemble_metadata_path,
-        sumo_connection=args.sumo_connection
+        sumo_connection=sumo_connection
         )
     e.add_files(args.search_path)
     e.upload(threads=args.threads, register_ensemble=True)
@@ -34,8 +40,8 @@ def parse_arguments():
     parser.add_argument('threads', type=int, default=8, help="Number of threads to use. Default: 8")
     args = parser.parse_args()
 
-    if args.env not in ['dev', 'test', 'prod', 'exp', 'fmu']:
-        raise ValueError(f'Illegal environment: {args.env}. Valid environments: dev, test, prod, exp, fmu')
+    if args.env not in ['dev', 'test', 'prod', 'exp', 'fmu', 'preview']:
+        raise ValueError(f'Illegal environment: {args.env}. Valid environments: dev, test, prod, exp, fmu, preview')
 
     return args
 
