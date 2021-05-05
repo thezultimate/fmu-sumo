@@ -20,8 +20,8 @@ from fmu.sumo import uploader
 
 """
 
-def main():
 
+def main():
     # parse arguments
     args = parse_arguments()
 
@@ -37,8 +37,8 @@ def main():
     # make some space in the output
     print("\n\n")
 
-def parse_arguments():
 
+def parse_arguments():
     """
 
         Parse the arguments

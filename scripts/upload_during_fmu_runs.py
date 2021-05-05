@@ -9,7 +9,6 @@ from fmu.sumo import uploader
 
 
 def main():
-
     args = parse_arguments()
 
     print('\n\n =======')
@@ -26,14 +25,14 @@ def main():
     e.add_files(os.path.join(args.searchpath))
 
     # upload the indexed files
-    e.upload(threads=args.threads, register_ensemble=False)   # registration should have been done by HOOK workflow
+    e.upload(threads=args.threads, register_ensemble=False)  # registration should have been done by HOOK workflow
 
     # tmp: Let me know that main has finished
     print(f'Searchpath was: {args.searchpath}')
     print('upload_during_fmu_runs.py:main() has ended')
 
-def parse_arguments():
 
+def parse_arguments():
     """
 
         Parse the arguments
@@ -54,6 +53,7 @@ def parse_arguments():
         raise ValueError(f'Illegal environment: {args.env}. Valid environments: dev, test, prod, exp, fmu')
 
     return args
+
 
 if __name__ == '__main__':
     main()

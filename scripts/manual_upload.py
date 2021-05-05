@@ -7,10 +7,11 @@ from datetime import datetime
 import time
 
 logger = logging.getLogger()
-#logger.setLevel(logging.INFO)
+# logger.setLevel(logging.INFO)
 handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.INFO)
 logger.addHandler(handler)
+
 
 def main():
     """Script for uploading data to Sumo"""
@@ -20,21 +21,21 @@ def main():
 
     # add some files
     subfolders = [f'realization-0/{args.iteration}/share/results/maps/*.gri',
-                  #f'realization-*/{args.iteration}/share/results/polygons_metadata_demo/*.pol',
-                  #f'realization-*/{args.iteration}/share/results/maps_metadata_demo/*amplitude*.gri',
-                  #f'realization-*/{args.iteration}/share/results/tables_metadata_demo/inplace_volumes*.csv',
+                  # f'realization-*/{args.iteration}/share/results/polygons_metadata_demo/*.pol',
+                  # f'realization-*/{args.iteration}/share/results/maps_metadata_demo/*amplitude*.gri',
+                  # f'realization-*/{args.iteration}/share/results/tables_metadata_demo/inplace_volumes*.csv',
 
-                  #f'{args.iteration}/share/results/maps/depth/*.gri',
-                  #f'{args.iteration}/share/results/maps/isochores/*.gri',
-                  #f'{args.iteration}/share/results/maps/depth_conversion/*.gri',
-                  #f'realization-0/{args.iteration}/share/results/polygons/*--field_outline.csv',
-                  #f'realization-0/{args.iteration}/share/results/polygons/*--faultlines.csv',
-                  #f'realization-*/{args.iteration}/share/results/maps/depth/*.gri',
-                  #f'realization-*/{args.iteration}/share/results/maps/isochores/*.gri',
-                  #f'realization-0/{args.iteration}/share/results/maps/fwl/*.gri'
-                  #f'realization-0/{args.iteration}/share/results/maps/depth_conversion/*.gri',
-                  #f'realization-0/{args.iteration}/share/results/maps/depth/*.gri',
-                  #f'realization-0/{args.iteration}/share/results/maps/isochores/*.gri',
+                  # f'{args.iteration}/share/results/maps/depth/*.gri',
+                  # f'{args.iteration}/share/results/maps/isochores/*.gri',
+                  # f'{args.iteration}/share/results/maps/depth_conversion/*.gri',
+                  # f'realization-0/{args.iteration}/share/results/polygons/*--field_outline.csv',
+                  # f'realization-0/{args.iteration}/share/results/polygons/*--faultlines.csv',
+                  # f'realization-*/{args.iteration}/share/results/maps/depth/*.gri',
+                  # f'realization-*/{args.iteration}/share/results/maps/isochores/*.gri',
+                  # f'realization-0/{args.iteration}/share/results/maps/fwl/*.gri'
+                  # f'realization-0/{args.iteration}/share/results/maps/depth_conversion/*.gri',
+                  # f'realization-0/{args.iteration}/share/results/maps/depth/*.gri',
+                  # f'realization-0/{args.iteration}/share/results/maps/isochores/*.gri',
                   ]
 
     sumo_connection = uploader.SumoConnection(env=args.env)
@@ -46,8 +47,11 @@ def main():
         print('Adding files: {}'.format(subfolder))
         e.add_files(os.path.join(args.casepath, subfolder))
 
-    print(f'{datetime.isoformat(datetime.now())}: Uploading {len(e.files)} files with {args.threads} threads on environment {args.env}')
+    print(
+        f'{datetime.isoformat(datetime.now())}: Uploading {len(e.files)} files with {args.threads} threads on '
+        f'environment {args.env}')
     upload_results = e.upload(threads=args.threads)
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -61,6 +65,7 @@ def parse_arguments():
         raise ValueError(f'Illegal environment: {args.env}. Valid environments: dev, test, prod, exp, fmu')
 
     return args
+
 
 if __name__ == '__main__':
     main()
