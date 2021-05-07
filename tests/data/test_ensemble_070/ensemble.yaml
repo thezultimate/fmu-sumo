@@ -1,0 +1,73 @@
+# example YAML file for ensembles (a parent object in Sumo)
+
+$schema: https://main-fmu-schemas-dev.radix.equinor.com/schemas/0.7.0/fmu_results.json
+$version: "0.7.0" # including for REP and others to build logic on. Not sure if $version is allowed...
+$source: fmu  # always included, and always this value if FMU made it. For quick identification for external consumers.
+
+events:
+  - datetime: "2020-10-28T14:28:02"
+    user:
+      user_id: peesv
+    event: created
+  - datetime: "2020-10-28T14:46:14"
+    user: 
+      user_id: peesv
+    event: updated
+
+class: ensemble
+
+# no "data" block in ensemble objects
+
+# the "fmu" block in ensembles only have "model" and "ensemble" sub-elements
+fmu:
+  model:
+    name: ff
+    revision: 21.0.0.dev
+    description:
+      - detailed description
+      - optional
+
+  ensemble:
+    case:
+      name: TESTCASE
+      id: 44cd1b84-766f-4c93-9050-g921861d9420   # to identify ensembles belonging to the same case, see issue
+    user:
+      user_id: testuser
+    iteration: "0"  # expanded to "iteration" and changed to string
+    id: 15ce3b84-766f-4c93-9050-b154861f9100  # ensemble ID for this ensemble
+    restart_from: 15ce3b84-766f-4c93-9050-b154861f9100   # ensemble ID for another ensemble
+    description:
+      - yet other detailed description
+      - optional
+
+# masterdata:
+# These are static data read from external config YAML file (fmuconfig or similar).
+# Some of these static data are used while processing to populate some non-required
+# fields in data block (for example names alias, color-tables)
+
+# access:
+# Level containing properties used for access control
+
+access:
+  asset:
+    name: Drogon  # adding level to make room for unique ID in the future
+
+# ensemble objects have no ssdl details
+
+masterdata:
+  smda:
+    country:
+      - identifier: Norway
+        uuid: ad214d85-8a1d-19da-e053-c918a4889309
+    discovery:
+      - short_identifier: DROGON
+        uuid: ad214d85-8a1d-19da-e053-c918a4889309
+    field:
+      - identifier: DROGON
+        uuid: 00000000-0000-0000-0000-000000000000
+    coordinate_system:
+      identifier: ST_WGS84_UTM37N_P32637
+      uuid: ad214d85-dac7-19da-e053-c918a4889309
+    stratigraphic_column:
+      identifier: DROGON_2020
+      uuid: some-unique-id-to-be-provided-by-smda

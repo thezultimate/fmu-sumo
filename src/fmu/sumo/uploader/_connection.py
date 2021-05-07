@@ -10,14 +10,14 @@ class SumoConnection:
         self._api = None
         self._env = env
 
-        info = 'Connection to Sumo on environment: {}'.format(self.env)
+        info = "Connection to Sumo on environment: {}".format(self.env)
         logging.info(info)
         print(info)
 
     @property
     def env(self):
         if self._env is None:
-            self._env = 'dev'
+            self._env = "dev"
 
         return self._env
 
@@ -30,8 +30,8 @@ class SumoConnection:
         if self._api is None:
             self._api = self._establish_connection()
 
-            name = self._api.userdata().get('name')
-            upn = self._api.userdata().get('profile').get('userPrincipalName')
+            name = self._api.userdata().get("name")
+            upn = self._api.userdata().get("profile").get("userPrincipalName")
 
             info = f"Authenticated user: {name} ({upn})"
             logging.info(info)
