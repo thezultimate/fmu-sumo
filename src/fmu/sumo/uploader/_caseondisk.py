@@ -1,6 +1,6 @@
 """
 
-    The EnsembleOnDisk class objectifies an FMU ensemble (results) as it appears on the disk.
+    The CaseOnDisk class objectifies an FMU case (results) as it appears on the disk.
 
 """
 
@@ -16,21 +16,21 @@ import pandas as pd
 from fmu.sumo.uploader._fileondisk import FileOnDisk
 from fmu.sumo.uploader._upload_files import upload_files
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # pylint: disable=C0103 # allow non-snake case variable names
 
 
-class EnsembleOnDisk:
+class CaseOnDisk:
     """
     Class to hold information about an ERT run on disk.
 
-    The EnsembleOnDisk object is a representation of files belonging to an ERT ensemble,
+    The CaseOnDisk object is a representation of files belonging to an FMU case,
     as they are stored on the Scratch disk.
 
-    An Ensemble in this context is a set of metadata describing this particular ensemble,
-    and an arbitrary number of files belonging to this ensemble. Each file is in reality
+    A Case in this context is a set of metadata describing this particular case,
+    and an arbitrary number of files belonging to this case. Each file is in reality
     a file pair, consisting of a data file (could be any file type) and a metadata file
     (yaml formatted, according) to FMU standards.
 
@@ -38,38 +38,38 @@ class EnsembleOnDisk:
         >>> from fmu import sumo
 
         >>> env = 'dev'
-        >>> ensemble_metadata_path = 'path/to/ensemble_metadata.yaml'
+        >>> case_metadata_path = 'path/to/case_metadata.yaml'
         >>> search_path = 'path/to/search_path/'
 
         >>> sumo_connection = sumo.SumoConnection(env=env)
-        >>> e = sumo.EnsembleOnDisk(
-                ensemble_metadata_path=ensemble_metadata_path,
+        >>> e = sumo.CaseOnDisk(
+                case_metadata_path=case_metadata_path,
                 sumo_connection=sumo_connection)
 
-        After initialization, files must be explicitly indexed into the EnsembleOnDisk object:
+        After initialization, files must be explicitly indexed into the CaseOnDisk object:
 
         >>> e.add_files(search_path)
 
-        When initialized, the ensemble can be uploaded to Sumo:
+        When initialized, the case can be uploaded to Sumo:
 
         >>> e.upload()
 
     Args:
-        ensemble_metadata_path (str): Path to the ensemble_metadata file for the ensemble
+        case_metadata_path (str): Path to the case_metadata file for the case
         sumo_connection (fmu.sumo.SumoConnection): SumoConnection object
 
 
     """
 
-    def __init__(self, ensemble_metadata_path: str, sumo_connection):
+    def __init__(self, case_metadata_path: str, sumo_connection):
         """
-        ensemble_metadata_path (str): Path to ensemble_metadata for ensemble
+        case_metadata_path (str): Path to case_metadata for case
         api (SumoConnection instance): Connection to Sumo.
         """
         self.sumo_connection = sumo_connection
 
-        self.ensemble_metadata = _load_ensemble_metadata(ensemble_metadata_path)
-        self._fmu_ensemble_id = self._get_fmu_ensemble_id()
+        self.case_metadata = _load_case_metadata(case_metadata_path)
+        self._fmu_case_id = self._get_fmu_case_id()
         self._sumo_parent_id = self._get_sumo_parent_id()
         self._files = []
 
@@ -92,9 +92,9 @@ class EnsembleOnDisk:
         return self._sumo_parent_id
 
     @property
-    def fmu_ensemble_id(self):
-        """Return the fmu_ensemble_id"""
-        return self._fmu_ensemble_id
+    def fmu_case_id(self):
+        """Return the fmu_case_id"""
+        return self._fmu_case_id
 
     @property
     def files(self):
@@ -102,7 +102,7 @@ class EnsembleOnDisk:
         return self._files
 
     def add_files(self, search_string):
-        """Add files to the ensemble, based on search string"""
+        """Add files to the case, based on search string"""
         file_paths = _find_file_paths(search_string)
 
         for file_path in file_paths:
@@ -116,8 +116,8 @@ class EnsembleOnDisk:
                 print(info)
 
     def _get_sumo_parent_id(self):
-        """Call sumo, check if the ensemble is already there. Use fmu_ensemble_id for this."""
-        query = f"fmu.ensemble.id:{self.fmu_ensemble_id}"
+        """Call sumo, check if the case is already there. Use fmu_case_id for this."""
+        query = f"fmu.case.id:{self.fmu_case_id}"
         search_results = self.sumo_connection.api.searchroot(query, search_size=2)
 
         # To catch crazy rare situation when index is empty (first upload to new index)
@@ -134,53 +134,53 @@ class EnsembleOnDisk:
             return sumo_parent_id
 
         raise ValueError(
-            f"More than one hit for fmu_ensemble_id {self.fmu_ensemble_id} found on Sumo"
+            f"More than one hit for fmu_case_id {self.fmu_case_id} found on Sumo"
         )
 
     def register(self):
         """
-        Register this ensemble on Sumo.
-        Assumptions: If registering an already existing ensemble, it will be overwritten.
+        Register this case on Sumo.
+        Assumptions: If registering an already existing case, it will be overwritten.
         ("register" might be a bad word for this...)
 
         Returns:
-            sumo_parent_id (uuid4): Unique ID for this ensemble on Sumo
+            sumo_parent_id (uuid4): Unique ID for this case on Sumo
         """
-        info = "Registering ensemble on Sumo"
-        logging.info(info)
+        info = "Registering case on Sumo"
+        logger.info(info)
         print(info)
 
-        sumo_parent_id = self._upload_ensemble_metadata(self.ensemble_metadata)
+        sumo_parent_id = self._upload_case_metadata(self.case_metadata)
         self._sumo_parent_id = sumo_parent_id
 
-        info = "Ensemble registered. SumoID: {}".format(sumo_parent_id)
-        logging.info(info)
+        info = "Case registered. SumoID: {}".format(sumo_parent_id)
+        logger.info(info)
         print(info)
 
         return sumo_parent_id
 
-    def _upload_ensemble_metadata(self, ensemble_metadata: dict):
-        """Given a ensemble_metadata dict, upload it to Sumo"""
-        response = self.sumo_connection.api.save_top_level_json(json=ensemble_metadata)
+    def _upload_case_metadata(self, case_metadata: dict):
+        """Given a case_metadata dict, upload it to Sumo"""
+        response = self.sumo_connection.api.save_top_level_json(json=case_metadata)
 
         returned_object_id = response.json().get("objectid")
 
         return returned_object_id
 
-    def _get_fmu_ensemble_id(self):
-        """Look up and return ensemble_id from ensemble_metadata"""
-        fmu_ensemble_id = self.ensemble_metadata.get("fmu").get("ensemble").get("id")
+    def _get_fmu_case_id(self):
+        """Look up and return case_id from case_metadata"""
+        fmu_case_id = self.case_metadata.get("fmu").get("case").get("uuid")
 
-        if not fmu_ensemble_id:
-            raise ValueError("Could not get fmu_ensemble_id from ensemble metadata")
+        if not fmu_case_id:
+            raise ValueError("Could not get fmu_case_id from case metadata")
 
-        return fmu_ensemble_id
+        return fmu_case_id
 
-    def upload(self, threads=4, max_attempts=3, register_ensemble=False):
+    def upload(self, threads=4, max_attempts=3, register_case=False):
         """
-        Trigger upload of files in this ensemble.
+        Trigger upload of files in this case.
 
-            Get sumo_parent_id. If None, ensemble is not registered on Sumo.
+            Get sumo_parent_id. If None, case is not registered on Sumo.
 
             Upload all indexed files. Collect the files that have been uploaded OK, the
             ones that have failed and the ones that have been rejected.
@@ -190,14 +190,14 @@ class EnsembleOnDisk:
         """
 
         if self.sumo_parent_id is None:
-            logging.info("Ensemble is not registered on Sumo")
+            logger.info("Case is not registered on Sumo")
 
-            if register_ensemble:
+            if register_case:
                 self.register()
             else:
                 raise IOError(
-                    "Ensemble is not registered on sumo. "
-                    "Set register_ensemble to True if you want to do so."
+                    "Case is not registered on sumo. "
+                    "Set register_case to True if you want to do so."
                 )
 
         if not self.files:
@@ -231,7 +231,7 @@ class EnsembleOnDisk:
             attempts += 1
 
             time.sleep(3)
-            logging.debug(
+            logger.debug(
                 "Retrying {} failed uploads after waiting 3 seconds".format(
                     len(failed_uploads)
                 )
@@ -244,56 +244,56 @@ class EnsembleOnDisk:
 
         if len(ok_uploads) > 0:
             upload_statistics = _calculate_upload_stats(ok_uploads)
-            logging.info(upload_statistics)
+            logger.info(upload_statistics)
 
         if failed_uploads:
-            logging.info(f"{len(failed_uploads)} files failed to be uploaded")
+            logger.info(f"{len(failed_uploads)} files failed to be uploaded")
 
             for u in failed_uploads[0:4]:
-                logging.info("\n" + "=" * 50)
+                logger.info("\n" + "=" * 50)
 
-                logging.info(f"Filepath: {u.get('blob_file_path')}")
-                logging.info(
+                logger.info(f"Filepath: {u.get('blob_file_path')}")
+                logger.info(
                     f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
                     f"{u.get('metadata_upload_response_text')}"
                 )
-                logging.info(
+                logger.info(
                     f"Blob: [{u.get('blob_upload_response_status_code')}] "
                     f"{u.get('blob_upload_response_status_text')}"
                 )
 
         if rejected_uploads:
-            logging.info(
+            logger.info(
                 f"\n\n{len(rejected_uploads)} files rejected by Sumo. First 5 rejected files:"
             )
 
             for u in rejected_uploads[0:4]:
-                logging.info("\n" + "=" * 50)
+                logger.info("\n" + "=" * 50)
 
-                logging.info(f"Filepath: {u.get('blob_file_path')}")
-                logging.info(
+                logger.info(f"Filepath: {u.get('blob_file_path')}")
+                logger.info(
                     f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
                     f"{u.get('metadata_upload_response_text')}"
                 )
-                logging.info(
+                logger.info(
                     f"Blob: [{u.get('blob_upload_response_status_code')}] "
                     f"{u.get('blob_upload_response_status_text')}"
                 )
 
         if failed_uploads:
-            logging.info(
+            logger.info(
                 f"\n\n{len(failed_uploads)} files rejected by Sumo. First 5 rejected files:"
             )
 
             for u in failed_uploads[0:4]:
-                logging.info("\n" + "=" * 50)
+                logger.info("\n" + "=" * 50)
 
-                logging.info(f"Filepath: {u.get('blob_file_path')}")
-                logging.info(
+                logger.info(f"Filepath: {u.get('blob_file_path')}")
+                logger.info(
                     f"Metadata: [{u.get('metadata_upload_response_status_code')}] "
                     f"{u.get('metadata_upload_response_text')}"
                 )
-                logging.info(
+                logger.info(
                     f"Blob: [{u.get('blob_upload_response_status_code')}] "
                     f"{u.get('blob_upload_response_status_text')}"
                 )
@@ -309,13 +309,13 @@ class EnsembleOnDisk:
         return ok_uploads
 
 
-def _load_ensemble_metadata(ensemble_metadata_path: str):
-    """Given ensemble_metadata path, load the yaml file from disk, return dict"""
+def _load_case_metadata(case_metadata_path: str):
+    """Given case_metadata path, load the yaml file from disk, return dict"""
 
-    if not os.path.isfile(ensemble_metadata_path):
-        raise IOError(f"ensemble metadata not found: {ensemble_metadata_path}")
+    if not os.path.isfile(case_metadata_path):
+        raise IOError(f"case metadata not found: {case_metadata_path}")
 
-    with open(ensemble_metadata_path, "r") as stream:
+    with open(case_metadata_path, "r") as stream:
         yaml_data = yaml.safe_load(stream)
 
     return yaml_data

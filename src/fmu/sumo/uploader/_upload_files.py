@@ -41,7 +41,7 @@ def upload_files(files: list, sumo_parent_id: str, sumo_connection, threads=4):
     Upload files
 
     files: list of FileOnDisk objects
-    sumo_parent_id: sumo_parent_id for the parent ensemble
+    sumo_parent_id: sumo_parent_id for the parent case
 
     Upload is kept outside classes to use multithreading.
     """
