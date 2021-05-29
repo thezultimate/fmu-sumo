@@ -17,7 +17,7 @@ from fmu.sumo.uploader._fileondisk import FileOnDisk
 from fmu.sumo.uploader._upload_files import upload_files
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.CRITICAL)
 
 # pylint: disable=C0103 # allow non-snake case variable names
 
@@ -61,16 +61,21 @@ class CaseOnDisk:
 
     """
 
-    def __init__(self, case_metadata_path: str, sumo_connection):
+    def __init__(self, case_metadata_path: str, sumo_connection, verbosity="DEBUG"):
         """
         case_metadata_path (str): Path to case_metadata for case
         api (SumoConnection instance): Connection to Sumo.
         """
-        self.sumo_connection = sumo_connection
+
+        logger.setLevel(level=verbosity)
+
+        self.sumo_connection = sumo_connection        
 
         self.case_metadata = _load_case_metadata(case_metadata_path)
-        self._fmu_case_id = self._get_fmu_case_id()
+        self._fmu_case_uuid = self._get_fmu_case_uuid()
+        logger.debug("self._fmu_case_uuid is %s", self._fmu_case_uuid)
         self._sumo_parent_id = self._get_sumo_parent_id()
+        logger.debug("self._sumo_parent_id is %s", self._sumo_parent_id)
         self._files = []
 
     def __str__(self):
@@ -92,9 +97,9 @@ class CaseOnDisk:
         return self._sumo_parent_id
 
     @property
-    def fmu_case_id(self):
-        """Return the fmu_case_id"""
-        return self._fmu_case_id
+    def fmu_case_uuid(self):
+        """Return the fmu_case_uuid"""
+        return self._fmu_case_uuid
 
     @property
     def files(self):
@@ -116,8 +121,8 @@ class CaseOnDisk:
                 print(info)
 
     def _get_sumo_parent_id(self):
-        """Call sumo, check if the case is already there. Use fmu_case_id for this."""
-        query = f"fmu.case.id:{self.fmu_case_id}"
+        """Call sumo, check if the case is already there. Use fmu_case_uuid for this."""
+        query = f"fmu_case_uuid:{self.fmu_case_uuid}"
         search_results = self.sumo_connection.api.searchroot(query, search_size=2)
 
         # To catch crazy rare situation when index is empty (first upload to new index)
@@ -134,7 +139,7 @@ class CaseOnDisk:
             return sumo_parent_id
 
         raise ValueError(
-            f"More than one hit for fmu_case_id {self.fmu_case_id} found on Sumo"
+            f"More than one hit for fmu.case.uuid {self.fmu_case_uuid} found on Sumo"
         )
 
     def register(self):
@@ -146,16 +151,12 @@ class CaseOnDisk:
         Returns:
             sumo_parent_id (uuid4): Unique ID for this case on Sumo
         """
-        info = "Registering case on Sumo"
-        logger.info(info)
-        print(info)
+        logger.info("Registering case on Sumo")
 
         sumo_parent_id = self._upload_case_metadata(self.case_metadata)
         self._sumo_parent_id = sumo_parent_id
 
-        info = "Case registered. SumoID: {}".format(sumo_parent_id)
-        logger.info(info)
-        print(info)
+        logger.info("Case registered. SumoID: {}".format(sumo_parent_id))
 
         return sumo_parent_id
 
@@ -167,14 +168,14 @@ class CaseOnDisk:
 
         return returned_object_id
 
-    def _get_fmu_case_id(self):
+    def _get_fmu_case_uuid(self):
         """Look up and return case_id from case_metadata"""
-        fmu_case_id = self.case_metadata.get("fmu").get("case").get("uuid")
+        fmu_case_uuid = self.case_metadata.get("fmu").get("case").get("uuid")
 
-        if not fmu_case_id:
-            raise ValueError("Could not get fmu_case_id from case metadata")
+        if not fmu_case_uuid:
+            raise ValueError("Could not get fmu_case_uuid from case metadata")
 
-        return fmu_case_id
+        return fmu_case_uuid
 
     def upload(self, threads=4, max_attempts=3, register_case=False):
         """
