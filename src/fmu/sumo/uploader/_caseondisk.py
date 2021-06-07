@@ -122,7 +122,7 @@ class CaseOnDisk:
 
     def _get_sumo_parent_id(self):
         """Call sumo, check if the case is already there. Use fmu_case_uuid for this."""
-        query = f"fmu_case_uuid:{self.fmu_case_uuid}"
+        query = f"fmu.case.uuid:{self.fmu_case_uuid}"
         search_results = self.sumo_connection.api.searchroot(query, search_size=2)
 
         # To catch crazy rare situation when index is empty (first upload to new index)
