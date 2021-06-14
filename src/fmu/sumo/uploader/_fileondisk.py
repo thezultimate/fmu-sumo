@@ -32,9 +32,9 @@ def path_to_yaml_path(path):
     """
 
     dir_name = os.path.dirname(path)
-    basename = os.path.basename(path)
+    basename = os.path.splitext(os.path.basename(path))[0]
 
-    return os.path.join(dir_name, f".{basename}.yaml")
+    return os.path.join(dir_name, f".{basename}.yml")
 
 
 def parse_yaml(path):
