@@ -18,12 +18,12 @@ from fmu.sumo import uploader
 def main():
     args = parse_arguments()
     sumo_connection = uploader.SumoConnection(env=args.env)
-    e = uploader.EnsembleOnDisk(
+    case = uploader.EnsembleOnDisk(
         ensemble_metadata_path=args.ensemble_metadata_path,
         sumo_connection=sumo_connection,
     )
-    e.add_files(args.search_path)
-    e.upload(threads=args.threads, register_ensemble=True)
+    case.add_files(args.search_path)
+    case.upload(threads=args.threads, register_ensemble=True)
 
 
 def parse_arguments():

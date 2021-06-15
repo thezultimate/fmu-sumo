@@ -29,10 +29,10 @@ def main():
     sumo_connection = uploader.SumoConnection(env=args.env)
 
     # initiate the ensemble on disk object. This will also register the ensemble on Sumo.
-    e = uploader.EnsembleOnDisk(ensemble_metadata_path=args.ensemble_metadata_path, sumo_connection=sumo_connection)
+    case = uploader.EnsembleOnDisk(ensemble_metadata_path=args.ensemble_metadata_path, sumo_connection=sumo_connection)
 
     # Register the ensemble on Sumo
-    e.register()
+    case.register()
 
     # make some space in the output
     print("\n\n")
