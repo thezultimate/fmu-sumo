@@ -42,17 +42,17 @@ class CaseOnDisk:
         >>> search_path = 'path/to/search_path/'
 
         >>> sumo_connection = sumo.SumoConnection(env=env)
-        >>> e = sumo.CaseOnDisk(
+        >>> case = sumo.CaseOnDisk(
                 case_metadata_path=case_metadata_path,
                 sumo_connection=sumo_connection)
 
         After initialization, files must be explicitly indexed into the CaseOnDisk object:
 
-        >>> e.add_files(search_path)
+        >>> case.add_files(search_path)
 
         When initialized, the case can be uploaded to Sumo:
 
-        >>> e.upload()
+        >>> case.upload()
 
     Args:
         case_metadata_path (str): Path to the case_metadata file for the case

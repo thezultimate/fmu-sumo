@@ -19,13 +19,13 @@ def main():
     sumo_connection = uploader.SumoConnection(env=args.env)
 
     # initiate the ensemble on disk object
-    e = uploader.EnsembleOnDisk(ensemble_metadata_path=args.ensemble_metadata_path, sumo_connection=sumo_connection)
+    case = uploader.EnsembleOnDisk(ensemble_metadata_path=args.ensemble_metadata_path, sumo_connection=sumo_connection)
 
     # add files to the ensemble on disk object
-    e.add_files(os.path.join(args.searchpath))
+    case.add_files(os.path.join(args.searchpath))
 
     # upload the indexed files
-    e.upload(threads=args.threads, register_ensemble=False)  # registration should have been done by HOOK workflow
+    case.upload(threads=args.threads, register_ensemble=False)  # registration should have been done by HOOK workflow
 
     # tmp: Let me know that main has finished
     print(f'Searchpath was: {args.searchpath}')

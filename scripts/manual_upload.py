@@ -24,21 +24,21 @@ def main():
     ]
 
     sumo_connection = uploader.SumoConnection(env=args.env)
-    e = uploader.CaseOnDisk(
+    case = uploader.CaseOnDisk(
         case_metadata_path=case_metadata_path, sumo_connection=sumo_connection
     )
 
-    e.register()
+    case.register()
 
     for subfolder in subfolders:
         print("Adding files: {}".format(subfolder))
-        e.add_files(os.path.join(args.casepath, subfolder))
+        case.add_files(os.path.join(args.casepath, subfolder))
 
-    logging.info("file count is %s", str(len(e.files)))
+    logging.info("file count is %s", str(len(case.files)))
     logging.info("thread count is %s", str(args.threads))
     logging.info("environment is %s", str(args.env))
 
-    upload_results = e.upload(threads=args.threads)
+    upload_results = case.upload(threads=args.threads)
 
     logging.info(upload_results)
 
