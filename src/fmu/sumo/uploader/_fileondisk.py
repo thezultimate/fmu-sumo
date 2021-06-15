@@ -124,6 +124,10 @@ class FileOnDisk:
         )
         return response
 
+    def _delete_metadata(self, sumo_connection, object_id):
+        response = sumo_connection.api.delete_object(object_id=object_id)
+        return response
+
     def upload_to_sumo(self, sumo_parent_id, sumo_connection):
         """Upload this file to Sumo"""
 
@@ -190,6 +194,7 @@ class FileOnDisk:
         except OSError as err:
             logging.info(f"Upload failed: {err}")
             result["status"] = "failed"
+            self._delete_metadata(self.sumo_object_id)
             return result
 
         _t1_blob = time.perf_counter()
@@ -203,6 +208,7 @@ class FileOnDisk:
         if response.status_code not in [200, 201]:
             logging.info(f"Upload failed: {response}")
             result["status"] = "failed"
+            self._delete_metadata(self.sumo_object_id)
         else:
             result["status"] = "ok"
 
