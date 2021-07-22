@@ -49,17 +49,18 @@ def test_case():
         case with this ID exists.
     """
     sumo_connection = uploader.SumoConnection(env=ENV)
+    logger.debug("initialize CaseOnDisk")
     e = uploader.CaseOnDisk(case_metadata_path="tests/data/test_case_080/case.yml",
                                 sumo_connection=sumo_connection)
 
-    query = f'fmu.case.uuid:{e.fmu_case_uuid}.keyword'
+    query = f'fmu.case.uuid:{e.fmu_case_uuid}'
 
     # assert that it is not there in the first place
-    search_results = sumo_connection.api.searchroot(query, select="source", buckets="source")
-    if not search_results:
-        logger.debug("search results: %s", str(search_results))
-        raise ValueError("No search results returned")
+    logger.debug("Asserting that the test case is not already there")
+    search_results = sumo_connection.api.searchroot(query)
     logger.debug("search results: %s", str(search_results))
+    if not search_results:
+        raise ValueError("No search results returned")
     hits = search_results.get('hits').get('hits')
     assert len(hits) == 0
 
@@ -68,7 +69,7 @@ def test_case():
 
     # assert that it is there now
     time.sleep(3)  # wait 3 seconds
-    search_results = sumo_connection.api.searchroot(query, select="source", buckets="source")
+    search_results = sumo_connection.api.searchroot(query)
     hits = search_results.get('hits').get('hits')
     assert len(hits) == 1
 
