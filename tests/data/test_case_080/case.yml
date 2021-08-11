@@ -26,7 +26,7 @@ fmu:
 
   case:
     name: MyCaseName
-    uuid: 00000000-0000-0000-0000-000000000000
+    uuid: 00000001-0001-0001-0001-000000000001
     user:
       id: jriv # $USER from ERT
     description:

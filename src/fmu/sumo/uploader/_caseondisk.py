@@ -9,6 +9,7 @@ import glob
 import time
 import logging
 import warnings
+import datetime
 
 import yaml
 import pandas as pd
@@ -71,6 +72,7 @@ class CaseOnDisk:
 
         self.sumo_connection = sumo_connection        
 
+        logger.debug("case metadata path: %s", case_metadata_path)
         self.case_metadata = _load_case_metadata(case_metadata_path)
         self._fmu_case_uuid = self._get_fmu_case_uuid()
         logger.debug("self._fmu_case_uuid is %s", self._fmu_case_uuid)
@@ -309,6 +311,22 @@ class CaseOnDisk:
 
         return ok_uploads
 
+def _sanitize_datetimes(data):
+    """Given a dictionary, find and replace all datetime objects
+    with isoformat string, so that it does not cause problems for
+    JSON later on"""
+
+    if isinstance(data, datetime.datetime):
+        return data.isoformat()
+
+    if isinstance(data, dict):
+        for key in data.keys():
+            data[key] = _sanitize_datetimes(data[key])
+
+    elif isinstance(data, list):
+        data = [_sanitize_datetimes(element) for element in data]
+
+    return data
 
 def _load_case_metadata(case_metadata_path: str):
     """Given case_metadata path, load the yaml file from disk, return dict"""
@@ -318,6 +336,9 @@ def _load_case_metadata(case_metadata_path: str):
 
     with open(case_metadata_path, "r") as stream:
         yaml_data = yaml.safe_load(stream)
+
+    logger.debug("Sanitizing datetimes from loaded case metadata")
+    yaml_data = _sanitize_datetimes(yaml_data)
 
     return yaml_data
 

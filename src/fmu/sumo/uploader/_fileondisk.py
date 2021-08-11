@@ -32,7 +32,7 @@ def path_to_yaml_path(path):
     """
 
     dir_name = os.path.dirname(path)
-    basename = os.path.splitext(os.path.basename(path))[0]
+    basename = os.path.basename(path)
 
     return os.path.join(dir_name, f".{basename}.yml")
 
