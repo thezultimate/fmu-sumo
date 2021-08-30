@@ -19,7 +19,7 @@ from fmu.sumo import uploader
 connection = uploader.SumoConnection()
 
 # Initiate the case object
-case = sumoCaseOnDisk(
+case = sumo.CaseOnDisk(
     case_metadata_path="/path/to/case_metadata.yml",
     sumo_connection=sumo_connection
     )
