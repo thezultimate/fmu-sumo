@@ -18,14 +18,14 @@ def main():
     # establish the connection
     sumo_connection = uploader.SumoConnection(env=args.env)
 
-    # initiate the ensemble on disk object
-    case = uploader.EnsembleOnDisk(ensemble_metadata_path=args.ensemble_metadata_path, sumo_connection=sumo_connection)
+    # initiate the case on disk object
+    case = uploader.CaseOnDisk(case_metadata_path=args.case_metadata_path, sumo_connection=sumo_connection)
 
-    # add files to the ensemble on disk object
+    # add files to the case on disk object
     case.add_files(os.path.join(args.searchpath))
 
     # upload the indexed files
-    case.upload(threads=args.threads, register_ensemble=False)  # registration should have been done by HOOK workflow
+    case.upload(threads=args.threads, register_case=False)  # registration should have been done by HOOK workflow
 
     # tmp: Let me know that main has finished
     print(f'Searchpath was: {args.searchpath}')
@@ -43,7 +43,7 @@ def parse_arguments():
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('ensemble_metadata_path', type=str, help='Absolute path to run ensemble_metadata')
+    parser.add_argument('case_metadata_path', type=str, help='Absolute path to run case_metadata')
     parser.add_argument('searchpath', type=str, help='Globable search path for files to upload')
     parser.add_argument('env', type=str, help="Which environment to use.")
     parser.add_argument('threads', type=int, help="Set number of threads to use.")
