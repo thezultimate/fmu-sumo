@@ -179,7 +179,7 @@ class CaseOnDisk:
 
         return fmu_case_uuid
 
-    def upload(self, threads=4, max_attempts=3, register_case=False):
+    def upload(self, threads=4, max_attempts=1, register_case=False):
         """
         Trigger upload of files in this case.
 

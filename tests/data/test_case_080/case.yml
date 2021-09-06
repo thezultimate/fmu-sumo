@@ -3,36 +3,23 @@
 $schema: https://main-fmu-schemas-dev.radix.equinor.com/schemas/0.8.0/fmu_results.json
 version: "0.8.0" # including for REP and others to build logic on.
 source: fmu  # always included, and always this value if FMU made it. For quick identification for external consumers.
-
-tracklog:
-  - datetime: 2020-10-28T14:28:02
-    user:
-      id: peesv
-    event: created
-  - datetime: 2020-10-28T14:46:14
-    user: 
-      id: peesv
-    event: updated
-
 class: case
-
 fmu:
+  case:
+    name: TestCase from fmu.sumo
+    uuid: 8bb56d60-8758-481a-89a4-6bac8561d38e # (pseudo-)random valid uuid4xs
+    user:
+      id: testuser # $USER from ERT
+    description:
+      - yet other detailed description
+      - optional
+    restart_from: 00000000-0000-0000-0000-000000000000   # fmu.iteration.uuid for another iteration/case
   model:
     name: ff
     revision: 21.0.0.dev
     description:
       - detailed description
       - optional
-
-  case:
-    name: MyCaseName
-    uuid: 00000001-0001-0001-0001-000000000001
-    user:
-      id: jriv # $USER from ERT
-    description:
-      - yet other detailed description
-      - optional
-    restart_from: 00000000-0000-0000-0000-000000000000   # fmu.iteration.uuid for another iteration/case
 
 # access:
 # Level containing properties used for access control
@@ -65,3 +52,13 @@ masterdata:
     stratigraphic_column:
       identifier: DROGON_2020
       uuid: 12345678-1234-1234-1234-123456789012
+
+tracklog:
+  - datetime: 2020-10-28T14:28:02
+    user:
+      id: testuser
+    event: created
+  - datetime: 2020-10-28T14:46:14
+    user: 
+      id: testuser
+    event: updated

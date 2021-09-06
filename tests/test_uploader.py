@@ -11,7 +11,7 @@ from fmu.sumo import uploader
 TEST_DIR = Path(__file__).parent / "../"
 os.chdir(TEST_DIR)
 
-ENV = "fmu"
+ENV = "dev"
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level="DEBUG")
@@ -85,9 +85,13 @@ def test_one_file():
     e.add_files('tests/data/test_case_080/surface.bin')
 
     # Assert children is on Sumo
+
+    e.upload()
+    time.sleep(2)
     search_results = sumo_connection.api.search(query=f'{e.fmu_case_uuid}')
     total = search_results.get('hits').get('total').get('value')
-    assert total == 1
+    print(search_results.get('hits').get('total'))
+    assert total == 2
 
 
 def test_missing_metadata():
@@ -101,7 +105,7 @@ def test_missing_metadata():
 
     # Assert that expected warning was given
     with pytest.warns(UserWarning) as warnings_record:  # testdata contains one file with missing metadata
-        e.add_files('tests/data/test_case_080/*.bin')
+        e.add_files('tests/data/test_case_080/surface_no_metadata.bin')
         for _ in warnings_record:
             assert len(warnings_record) == 1, warnings_record
             assert warnings_record[0].message.args[0].endswith("No metadata, skipping file.")
@@ -109,4 +113,48 @@ def test_missing_metadata():
     # Assert children is on Sumo
     search_results = sumo_connection.api.search(query=f'{e.fmu_case_uuid}')
     total = search_results.get('hits').get('total').get('value')
-    assert total == 1
+    print(search_results.get('hits').get('total'))
+    assert total == 2
+
+
+def test_wrong_metadata():
+    """
+        Try to upload files where one does have metadata with error. Assert that warning is given
+        and that upload commences with the other files. Check that the children are present.
+    """
+    sumo_connection = uploader.SumoConnection(env=ENV)
+    e = uploader.CaseOnDisk(case_metadata_path="tests/data/test_case_080/case.yml",
+                                sumo_connection=sumo_connection)
+
+    # Assert that expected warning was given
+    e.add_files('tests/data/test_case_080/surface_error.bin')
+
+    e.upload()
+    time.sleep(2)
+    # Assert children is on Sumo
+    search_results = sumo_connection.api.search(query=f'{e.fmu_case_uuid}')
+    total = search_results.get('hits').get('total').get('value')
+    print(search_results.get('hits').get('total'))
+    assert total == 2
+
+
+
+def test_teardown():
+    """
+    Teardown all testdata
+    """
+    sumo_connection = uploader.SumoConnection(env=ENV)
+    e = uploader.CaseOnDisk(case_metadata_path="tests/data/test_case_080/case.yml",
+                                sumo_connection=sumo_connection)
+
+    # This uploads ensemble metadata to Sumo
+    e.register()
+
+    sumo_connection.api.delete_object(e.sumo_parent_id)
+
+    time.sleep(2)
+    # Assert children is not on Sumo
+    search_results = sumo_connection.api.search(query=f'{e.fmu_case_uuid}')
+    total = search_results.get('hits').get('total').get('value')
+    print(search_results.get('hits').get('total'))
+    assert total == 0

@@ -141,42 +141,53 @@ class FileOnDisk:
 
         result = {}
 
-        try:
+        backoff = [1,3,9]
 
-            # We need these included even if returning before blob upload
-            result["blob_file_path"] = self.path
-            result["blob_file_size"] = self.size
+        for i in backoff:
 
-            response = self._upload_metadata(
-                sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id
-            )
+            try:
 
-            _t1_metadata = time.perf_counter()
+                # We need these included even if returning before blob upload
+                result["blob_file_path"] = self.path
+                result["blob_file_size"] = self.size
 
-            result["metadata_upload_response_status_code"] = response.status_code
-            result["metadata_upload_response_text"] = response.text
-            result["metadata_upload_time_start"] = _t0_metadata
-            result["metadata_upload_time_end"] = _t1_metadata
-            result["metadata_upload_time_elapsed"] = _t1_metadata - _t0_metadata
-            result["metadata_file_path"] = self.metadata_path
-            result["metadata_file_size"] = self.size
+                response = self._upload_metadata(
+                    sumo_connection=sumo_connection, sumo_parent_id=sumo_parent_id
+                )
 
-        except TransientError as err:
-            result["status"] = "failed"
-            result["metadata_upload_response_status_code"] = err.code
-            result["metadata_upload_response_text"] = err.message
+                _t1_metadata = time.perf_counter()
+
+                result["metadata_upload_response_status_code"] = response.status_code
+                result["metadata_upload_response_text"] = response.text
+                result["metadata_upload_time_start"] = _t0_metadata
+                result["metadata_upload_time_end"] = _t1_metadata
+                result["metadata_upload_time_elapsed"] = _t1_metadata - _t0_metadata
+                result["metadata_file_path"] = self.metadata_path
+                result["metadata_file_size"] = self.size
+
+            except TransientError as err:
+                result["status"] = "failed"
+                result["metadata_upload_response_status_code"] = err.code
+                result["metadata_upload_response_text"] = err.message
+                time.sleep(i)
+                continue
+
+            except AuthenticationError as err:
+                result["status"] = "rejected"
+                result["metadata_upload_response_status_code"] = err.code
+                result["metadata_upload_response_text"] = err.message
+                return result
+            except PermanentError as err:
+                result["status"] = "rejected"
+                result["metadata_upload_response_status_code"] = err.code
+                result["metadata_upload_response_text"] = err.message
+                return result
+
+            break
+
+        if result["metadata_upload_response_status_code"] not in [200, 201]:
             return result
-        except AuthenticationError as err:
-            result["status"] = "rejected"
-            result["metadata_upload_response_status_code"] = err.code
-            result["metadata_upload_response_text"] = err.message
-            return result
-        except PermanentError as err:
-            result["status"] = "rejected"
-            result["metadata_upload_response_status_code"] = err.code
-            result["metadata_upload_response_text"] = err.message
-            return result
-
+            
         self.sumo_parent_id = sumo_parent_id
         self.sumo_object_id = response.json().get("objectid")
 
@@ -185,31 +196,49 @@ class FileOnDisk:
         # UPLOAD BLOB
         _t0_blob = time.perf_counter()
 
-        try:
-            response = self._upload_byte_string(
-                sumo_connection=sumo_connection,
-                object_id=self.sumo_object_id,
-                blob_url=blob_url,
-            )
-        except OSError as err:
-            logging.info(f"Upload failed: {err}")
-            result["status"] = "failed"
-            self._delete_metadata(self.sumo_object_id)
-            return result
+        for i in backoff:
+            try:
+                response = self._upload_byte_string(
+                    sumo_connection=sumo_connection,
+                    object_id=self.sumo_object_id,
+                    blob_url=blob_url,
+                )
 
-        _t1_blob = time.perf_counter()
 
-        result["blob_upload_response_status_code"] = response.status_code
-        result["blob_upload_response_text"] = response.text
-        result["blob_upload_time_start"] = _t0_blob
-        result["blob_upload_time_end"] = _t1_blob
-        result["blob_upload_time_elapsed"] = _t1_blob - _t0_blob
+                _t1_blob = time.perf_counter()
 
+                result["blob_upload_response_status_code"] = response.status_code
+                result["blob_upload_response_text"] = response.text
+                result["blob_upload_time_start"] = _t0_blob
+                result["blob_upload_time_end"] = _t1_blob
+                result["blob_upload_time_elapsed"] = _t1_blob - _t0_blob
+            except OSError as err:
+                logging.info(f"Upload failed: {err}")
+                result["status"] = "failed"
+                self._delete_metadata(self.sumo_object_id)
+                return result
+            except TransientError as err:
+                result["status"] = "failed"
+                time.sleep(i)
+                continue
+            except AuthenticationError as err:
+                logging.info(f"Upload failed: {response}")
+                result["status"] = "rejected"
+                self._delete_metadata(self.sumo_object_id)
+                return result
+            except PermanentError as err:
+                logging.info(f"Upload failed: {response}")
+                result["status"] = "rejected"
+                self._delete_metadata(self.sumo_object_id)
+                return result
+
+            break
+
+            
         if response.status_code not in [200, 201]:
             logging.info(f"Upload failed: {response}")
             result["status"] = "failed"
             self._delete_metadata(self.sumo_object_id)
         else:
             result["status"] = "ok"
-
         return result
