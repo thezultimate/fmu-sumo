@@ -19,6 +19,14 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     author_email="peesv@equinor.com",
+    entry_points={
+        "ert": [
+            "fmu_sumo_jobs = jobs.hook_implementations.jobs"
+        ],
+        "console_scripts": [
+            "sumo_upload=fmu.sumo.uploader.scripts.fm_fmu_uploader:main"
+        ]
+    },
     install_requires=[
         "PyYAML",
         "pandas",

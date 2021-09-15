@@ -9,3 +9,5 @@ except ImportError:
 from fmu.sumo.uploader._caseondisk import CaseOnDisk
 from fmu.sumo.uploader._connection import SumoConnection
 from fmu.sumo.uploader._fileondisk import FileOnDisk
+
+
