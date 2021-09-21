@@ -2,8 +2,6 @@
 This package is intended for interaction with Sumo within the FMU (Fast Model Update) ecosystem. 
 The current primary use case is uploading data from FMU to Sumo.
 
-**WORK IN PROGRESS - NOT FOR PRODUCTION**
-
 # concepts
 SumoConnection: The SumoConnection object represents the connection to Sumo, and will handle authentication etc when initiated. This object uses the Sumo python wrapper under the hood.
 CaseOnDisk: The CaseOnDisk object represents an ensemble of reservoir model realisations. The object relates to the case metadata. Individual files belonging to the case are represented as FileOnDisk objects.

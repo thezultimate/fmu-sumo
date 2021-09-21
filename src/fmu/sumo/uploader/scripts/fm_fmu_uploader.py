@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import warnings
 import os
 import argparse
@@ -20,7 +21,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.CRITICAL)
 
 def main():
-
     args = parse_arguments()
     logger.setLevel(level=args.loglevel)
 
@@ -67,14 +67,17 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("casepath", type=str, help="Absolute path to case root")
     parser.add_argument("searchpath", type=str, help="Case-relative search path for files to upload")
-    parser.add_argument("--env", type=str, help="Which environment to use.", default="dev")
+    parser.add_argument("env", type=str, help="Which environment to use.", default="prod")
     parser.add_argument("--threads", type=int, help="Set number of threads to use.", default=2)
     parser.add_argument("--metadata_path", type=str, help="Case-relative path to case metadata", default="share/metadata/fmu_case.yml")
     parser.add_argument("--loglevel", type=str, help="Verbosity for the logger", default="DEBUG")
     args = parser.parse_args()
 
-    if args.env not in ["dev", "test", "prod", "exp", "fmu", "preview"]:
-        raise ValueError(f"Illegal environment: {args.env}. Valid environments: dev, test, prod, exp, fmu, preview")
+    args.casepath = os.path.expandvars(args.casepath)
+    args.searchpath = os.path.expandvars(args.searchpath)
+
+    if args.env not in ["dev", "test", "prod", "exp", "preview"]:
+        raise ValueError(f"Illegal environment: {args.env}. Valid environments: dev, test, prod, exp, preview")
 
     if not Path(args.casepath).is_absolute():
         raise ValueError("Provided casepath must be an absolute path to the case root")
