@@ -1,0 +1,7 @@
+-- This is the ERT FORWARD_JOB that is being called from the ERT workflow
+
+STDERR sumo_upload.stderr
+STDOUT sumo_upload.stdout
+
+EXECUTABLE  ../../../bin/fmu-sumo/scripts/upload_during_fmu_runs.sh
+ARGLIST     <virtual_env> <case_metadata_path> <searchpath> <env> <threads>
