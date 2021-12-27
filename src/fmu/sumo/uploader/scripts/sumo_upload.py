@@ -8,6 +8,7 @@ import argparse
 import logging
 from pathlib import Path
 
+from ert_shared.plugins.plugin_manager import hook_implementation  # type: ignore
 from res.job_queue import ErtScript  # type: ignore
 
 from fmu.sumo import uploader
@@ -43,14 +44,19 @@ def main() -> None:
     # a dedicated argument parser for ERT workflow usage, which may be the reason for
     # this choice of architecture.)
 
-    args = parse_arguments()
+    parser = get_parser()
+    args = parser.parse_args()
 
     if args.verbose:
         logger.setLevel(logging.INFO)
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-    logger.info("Arguments are: %s", str(vars(args)))
+    # Legacy? Still needed?
+    args.casepath = os.path.expandvars(args.casepath)
+    args.searchpath = os.path.expandvars(args.searchpath)
+
+    check_arguments(args)
 
     sumo_upload_main(
         casepath=args.casepath,
@@ -116,15 +122,8 @@ class SumoUpload(ErtScript):
         )
 
 
-def parse_arguments():
-    """
-
-    Parse the arguments
-
-    Returns:
-        args: argparse.ArgumentParser() object
-
-    """
+def get_parser() -> argparse.ArgumentParser:
+    """Construct parser object for sumo_upload."""
 
     parser = argparse.ArgumentParser()
     parser.add_argument("casepath", type=str, help="Absolute path to case root")
@@ -132,7 +131,7 @@ def parse_arguments():
         "searchpath", type=str, help="Case-relative search path for files to upload"
     )
     parser.add_argument(
-        "env", type=str, help="Which environment to use.", default="prod"
+        "--env", type=str, help="Which environment to use.", default="prod"
     )
     parser.add_argument(
         "--threads", type=int, help="Set number of threads to use.", default=2
@@ -148,10 +147,13 @@ def parse_arguments():
         "--debug", action="store_true", help="Debug output, more verbose than --verbose"
     )
 
-    args = parser.parse_args()
+    return parser
 
-    args.casepath = os.path.expandvars(args.casepath)
-    args.searchpath = os.path.expandvars(args.searchpath)
+
+def check_arguments(args) -> None:
+    """Do sanity check of the input arguments."""
+
+    logger.info("Arguments are: %s", str(vars(args)))
 
     if args.env not in ["dev", "test", "prod", "exp", "preview"]:
         logger.error("env arg was %s", args.env)
@@ -169,7 +171,16 @@ def parse_arguments():
         logger.error("casepath arg was %s", args.casepath)
         raise ValueError("Provided case path does not exist")
 
-    return args
+
+@hook_implementation
+def legacy_ertscript_workflow(config):
+    """Hook the SumoUpload class into ERT with the name SUMO_UPLOAD,
+    and inject documentation"""
+    workflow = config.add_workflow(SumoUpload, "SUMO_UPLOAD")
+    workflow.parser = get_parser
+    workflow.description = DESCRIPTION
+    workflow.examples = EXAMPLES
+    workflow.category = "export"
 
 
 if __name__ == "__main__":
