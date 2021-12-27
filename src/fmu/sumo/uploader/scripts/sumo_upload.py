@@ -131,7 +131,7 @@ def get_parser() -> argparse.ArgumentParser:
         "searchpath", type=str, help="Case-relative search path for files to upload"
     )
     parser.add_argument(
-        "--env", type=str, help="Which environment to use.", default="prod"
+        "env", type=str, help="Which Sumo environment to use. Set through <SUMO_ENV>."
     )
     parser.add_argument(
         "--threads", type=int, help="Set number of threads to use.", default=2
