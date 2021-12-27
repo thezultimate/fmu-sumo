@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.CRITICAL)
 
 
-def main():
+def main() -> None:
+    """Entry point from command line"""
     args = parse_arguments()
 
     if args.verbose:
@@ -23,7 +24,23 @@ def main():
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-    logger.debug("Arguments are: %s", str(vars(args)))
+    logger.info("Arguments are: %s", str(vars(args)))
+
+    fmu_uploader_main(
+        casepath=args.casepath,
+        metadata_path=args.metadata_path,
+        searchpath=args.searchpath,
+        threads=args.threads,
+        env=args.env,
+    )
+
+
+def fmu_uploader_main(
+    casepath: str, metadata_path: str, searchpath: str, threads: int, env: str
+):
+    """The main script."""
+
+    logger.info("Running fmu_uploader_main() from main()")
 
     # establish the connection to Sumo
     sumo_connection = uploader.SumoConnection(env=args.env)
