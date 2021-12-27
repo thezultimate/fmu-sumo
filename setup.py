@@ -20,8 +20,11 @@ setup(
     ],
     author_email="peesv@equinor.com",
     entry_points={
-        "ert": ["fmu_sumo_jobs = jobs.hook_implementations.jobs"],
-        "console_scripts": ["sumo_upload=fmu.sumo.uploader.scripts.sumo_upload"],
+        "ert": [
+            "fmu_sumo_jobs = jobs.hook_implementations.jobs",
+            "SumoUpload = fmu.sumo.uploader.scripts.sumo_upload",
+        ],
+        "console_scripts": ["sumo_upload=fmu.sumo.uploader.scripts.sumo_upload:main"],
     },
     install_requires=[
         "PyYAML",
