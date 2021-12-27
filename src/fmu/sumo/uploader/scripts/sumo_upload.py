@@ -8,6 +8,8 @@ import argparse
 import logging
 from pathlib import Path
 
+from res.job_queue import ErtScript  # type: ignore
+
 from fmu.sumo import uploader
 
 
@@ -32,6 +34,15 @@ either update the workflow manually or create one per iteration.
 
 def main() -> None:
     """Entry point from command line"""
+
+    # Note for further development:
+    # Using subscript/csv_merge.py as inspiration for turning this into something
+    # runable also in ERT workflows. It is likely that some overhead is carried from
+    # the example which may not apply to sumo_upload. The separate main function may
+    # be one such carried feature which in the end does nothing (csv_merge applies
+    # a dedicated argument parser for ERT workflow usage, which may be the reason for
+    # this choice of architecture.)
+
     args = parse_arguments()
 
     if args.verbose:
@@ -53,7 +64,6 @@ def main() -> None:
 def sumo_upload_main(
     casepath: str, metadata_path: str, searchpath: str, threads: int, env: str
 ):
-    """The main script."""
 
     logger.info("Running fmu_uploader_main() from main()")
 
@@ -85,6 +95,25 @@ def sumo_upload_main(
         threads=threads, register_case=False
     )  # registration should have been done by HOOK workflow
     logger.debug("upload done")
+
+
+class SumoUpload(ErtScript):
+    """A class with a run() function that can be registered as an ERT plugin"""
+
+    # pylint: disable=too-few-public-methods
+    def run(self, *args):
+        # pylint: disable=no-self-use
+        """Parse with a simplified command line parser, for ERT only,
+        call sumo_upload_main()"""
+        args = parse_arguments()
+        logger.setLevel(logging.INFO)
+        sumo_upload_main(
+            casepath=args.casepath,
+            metadata_path=args.metadata_path,
+            searchpath=args.searchpath,
+            threads=args.threads,
+            env=args.env,
+        )
 
 
 def parse_arguments():
