@@ -17,7 +17,11 @@ logger.setLevel(logging.CRITICAL)
 
 def main():
     args = parse_arguments()
-    logger.setLevel(level=args.loglevel)
+
+    if args.verbose:
+        logger.setLevel(logging.INFO)
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
 
     logger.debug("Arguments are: %s", str(vars(args)))
 
@@ -78,9 +82,11 @@ def parse_arguments():
         help="Case-relative path to case metadata",
         default="share/metadata/fmu_case.yml",
     )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add_argument(
-        "--loglevel", type=str, help="Verbosity for the logger", default="DEBUG"
+        "--debug", action="store_true", help="Debug output, more verbose than --verbose"
     )
+
     args = parser.parse_args()
 
     args.casepath = os.path.expandvars(args.casepath)
