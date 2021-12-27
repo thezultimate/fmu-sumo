@@ -24,6 +24,12 @@ def installable_jobs():
     return _get_jobs_from_directory("config_jobs")
 
 
+@hook_implementation
+@plugin_response(plugin_name="fmu_sumo")
+def installable_workflow_jobs():
+    return {}
+
+
 def _get_module_variable_if_exists(module_name, variable_name, default=""):
     try:
         script_module = importlib.import_module(module_name)
@@ -40,8 +46,7 @@ def job_documentation(job_name):
     if job_name not in sumo_fmu_jobs:
         return None
 
-
-    module_name = "jobs.scripts.fm_{}".format(job_name.lower())
+    module_name = "jobs.scripts.{}".format(job_name.lower())
 
     description = _get_module_variable_if_exists(
         module_name=module_name, variable_name="description"
