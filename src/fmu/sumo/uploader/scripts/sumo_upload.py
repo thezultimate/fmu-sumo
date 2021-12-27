@@ -75,32 +75,31 @@ def sumo_upload_main(
 
     # establish the connection to Sumo
     sumo_connection = uploader.SumoConnection(env=env)
-    logger.debug("Connection to Sumo established")
+    logger.info("Connection to Sumo established")
 
     # initiate the case on disk object
-    logger.debug("Case-relative metadata path is %s", metadata_path)
+    logger.info("Case-relative metadata path is %s", metadata_path)
     case_metadata_path = Path(casepath) / Path(metadata_path)
-    logger.debug("case_metadata_path is %s", case_metadata_path)
+    logger.info("case_metadata_path is %s", case_metadata_path)
     e = uploader.CaseOnDisk(
         case_metadata_path=case_metadata_path, sumo_connection=sumo_connection
     )
 
     # add files to the case on disk object
-    logger.debug("Adding files. Search path is %s", searchpath)
+    logger.info("Adding files. Search path is %s", searchpath)
     e.add_files(searchpath)
-    logger.debug("%s files has been added", str(len(e.files)))
+    logger.info("%s files has been added", str(len(e.files)))
 
     if len(e.files) == 0:
-        logger.debug("%s No files - aborting")
         warnings.warn("No files found - aborting ")
         return
 
     # upload the indexed files
-    logger.debug("Starting upload")
+    logger.info("Starting upload")
     e.upload(
         threads=threads, register_case=False
     )  # registration should have been done by HOOK workflow
-    logger.debug("upload done")
+    logger.info("Upload done")
 
 
 class SumoUpload(ErtScript):
