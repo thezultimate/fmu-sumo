@@ -111,7 +111,8 @@ class SumoUpload(ErtScript):
         # pylint: disable=no-self-use
         """Parse with a simplified command line parser, for ERT only,
         call sumo_upload_main()"""
-        args = parse_arguments()
+        parser = get_parser()
+        args = parser.parse_args()
         logger.setLevel(logging.INFO)
         sumo_upload_main(
             casepath=args.casepath,
