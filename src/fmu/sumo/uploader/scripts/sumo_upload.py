@@ -14,7 +14,7 @@ from fmu.sumo import uploader
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.CRITICAL)
 
-# This documentation is for fmu_uploader as an ERT workflow
+# This documentation is for sumo_uploader as an ERT workflow
 DESCRIPTION = """
 SUMO_UPLOAD will upload files to Sumo. The typical use case is as add-on to 
 post-processing workflows which already create data across an ensemble.
@@ -41,7 +41,7 @@ def main() -> None:
 
     logger.info("Arguments are: %s", str(vars(args)))
 
-    fmu_uploader_main(
+    sumo_upload_main(
         casepath=args.casepath,
         metadata_path=args.metadata_path,
         searchpath=args.searchpath,
@@ -50,7 +50,7 @@ def main() -> None:
     )
 
 
-def fmu_uploader_main(
+def sumo_upload_main(
     casepath: str, metadata_path: str, searchpath: str, threads: int, env: str
 ):
     """The main script."""
