@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""This script uploads data to Sumo from an FMU workflow."""
+"""This script uploads data to Sumo from an ERT FORWARD_JOB."""
 
 import warnings
 import os
