@@ -20,19 +20,15 @@ setup(
     ],
     author_email="peesv@equinor.com",
     entry_points={
-        "ert": [
-            "fmu_sumo_jobs = jobs.hook_implementations.jobs"
-        ],
-        "console_scripts": [
-            "sumo_upload=fmu.sumo.uploader.scripts.fm_fmu_uploader:main"
-        ]
+        "ert": ["fmu_sumo_jobs = jobs.hook_implementations.jobs"],
+        "console_scripts": ["sumo_upload=fmu.sumo.uploader.scripts.sumo_upload"],
     },
     install_requires=[
         "PyYAML",
         "pandas",
         "sumo-wrapper-python",
         "setuptools",
-        "oneseismic"
+        "oneseismic",
     ],
     python_requires=">=3.4",
     packages=find_packages("src"),
