@@ -14,6 +14,21 @@ from fmu.sumo import uploader
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.CRITICAL)
 
+# This documentation is for fmu_uploader as an ERT workflow
+DESCRIPTION = """
+SUMO_UPLOAD will upload files to Sumo. The typical use case is as add-on to 
+post-processing workflows which already create data across an ensemble.
+"""
+
+EXAMPLES = """
+In an existing workflow e.g. ``ert/bin/workflows/MY_WORKFLOW`` with the contents::
+  MY_JOB <arguments>
+  SUMO_UPLOAD <SCRATCH>/<USER>/<CASE> <SCRATCH>/<USER>/<CASE>/MyIteration/share/results/tables/*.csv
+...where ``MY_JOB`` typically refers to a post-processing job creating data.
+Note that ERT workflows have no concept of "iteration", which in practice means you must
+either update the workflow manually or create one per iteration.
+"""  # noqa
+
 
 def main() -> None:
     """Entry point from command line"""
