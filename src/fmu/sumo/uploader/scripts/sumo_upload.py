@@ -58,20 +58,20 @@ def sumo_upload_main(
     logger.info("Running fmu_uploader_main() from main()")
 
     # establish the connection to Sumo
-    sumo_connection = uploader.SumoConnection(env=args.env)
+    sumo_connection = uploader.SumoConnection(env=env)
     logger.debug("Connection to Sumo established")
 
     # initiate the case on disk object
-    logger.debug("Case-relative metadata path is %s", args.metadata_path)
-    case_metadata_path = Path(args.casepath) / Path(args.metadata_path)
+    logger.debug("Case-relative metadata path is %s", metadata_path)
+    case_metadata_path = Path(casepath) / Path(metadata_path)
     logger.debug("case_metadata_path is %s", case_metadata_path)
     e = uploader.CaseOnDisk(
         case_metadata_path=case_metadata_path, sumo_connection=sumo_connection
     )
 
     # add files to the case on disk object
-    logger.debug("Adding files. Search path is %s", args.searchpath)
-    e.add_files(args.searchpath)
+    logger.debug("Adding files. Search path is %s", searchpath)
+    e.add_files(searchpath)
     logger.debug("%s files has been added", str(len(e.files)))
 
     if len(e.files) == 0:
@@ -82,7 +82,7 @@ def sumo_upload_main(
     # upload the indexed files
     logger.debug("Starting upload")
     e.upload(
-        threads=args.threads, register_case=False
+        threads=threads, register_case=False
     )  # registration should have been done by HOOK workflow
     logger.debug("upload done")
 
