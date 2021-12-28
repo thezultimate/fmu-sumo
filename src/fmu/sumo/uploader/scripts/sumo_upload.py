@@ -13,7 +13,6 @@ from res.job_queue import ErtScript  # type: ignore
 
 from fmu.sumo import uploader
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.CRITICAL)
 
@@ -60,18 +59,19 @@ def main() -> None:
 
     sumo_upload_main(
         casepath=args.casepath,
-        metadata_path=args.metadata_path,
         searchpath=args.searchpath,
-        threads=args.threads,
         env=args.env,
+        metadata_path=args.metadata_path,
+        threads=args.threads,
     )
 
 
 def sumo_upload_main(
-    casepath: str, metadata_path: str, searchpath: str, threads: int, env: str
+    casepath: str, searchpath: str, env: str, metadata_path: str, threads: int
 ):
+    """A "main" function that can be used both from command line and from ERT workflow"""
 
-    logger.info("Running fmu_uploader_main() from main()")
+    logger.debug("Running fmu_uploader_main()")
 
     # establish the connection to Sumo
     sumo_connection = uploader.SumoConnection(env=env)
@@ -91,14 +91,13 @@ def sumo_upload_main(
     logger.info("%s files has been added", str(len(e.files)))
 
     if len(e.files) == 0:
+        logger.debug("There are 0 (zero) files.")
         warnings.warn("No files found - aborting ")
         return
 
     # upload the indexed files
     logger.info("Starting upload")
-    e.upload(
-        threads=threads, register_case=False
-    )  # registration should have been done by HOOK workflow
+    e.upload(threads=threads, register_case=False)
     logger.info("Upload done")
 
 
@@ -110,15 +109,16 @@ class SumoUpload(ErtScript):
         # pylint: disable=no-self-use
         """Parse with a simplified command line parser, for ERT only,
         call sumo_upload_main()"""
+        logger.debug("Calling run() on SumoUpload")
         parser = get_parser()
-        args = parser.parse_args()
-        logger.setLevel(logging.INFO)
+        args = parser.parse_args(args)
+        check_arguments(args)
         sumo_upload_main(
             casepath=args.casepath,
-            metadata_path=args.metadata_path,
             searchpath=args.searchpath,
-            threads=args.threads,
             env=args.env,
+            metadata_path=args.metadata_path,
+            threads=args.threads,
         )
 
 
@@ -153,23 +153,23 @@ def get_parser() -> argparse.ArgumentParser:
 def check_arguments(args) -> None:
     """Do sanity check of the input arguments."""
 
-    logger.info("Arguments are: %s", str(vars(args)))
+    logger.debug("Running check_arguments()")
+    logger.debug("Arguments are: %s", str(vars(args)))
 
     if args.env not in ["dev", "test", "prod", "exp", "preview"]:
-        logger.error("env arg was %s", args.env)
         raise ValueError(
             f"Illegal environment: {args.env}. Valid environments: dev, test, prod, exp, preview"
         )
 
     if not Path(args.casepath).is_absolute():
-        logger.error("casepath arg was %s", args.casepath)
         if args.casepath.startswith("<") and args.casepath.endswith(">"):
             ValueError("ERT variable is not defined: %s", args.casepath)
         raise ValueError("Provided casepath must be an absolute path to the case root")
 
     if not Path(args.casepath).exists():
-        logger.error("casepath arg was %s", args.casepath)
         raise ValueError("Provided case path does not exist")
+
+    logger.debug("check_arguments() has ended")
 
 
 @hook_implementation
