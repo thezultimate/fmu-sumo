@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""This script uploads data to Sumo from an ERT FORWARD_JOB."""
+"""Upload data to Sumo from FMU."""
 
 import warnings
 import os
@@ -19,21 +19,31 @@ logger.setLevel(logging.CRITICAL)
 # This documentation is for sumo_uploader as an ERT workflow
 DESCRIPTION = """
 SUMO_UPLOAD will upload files to Sumo. The typical use case is as add-on to 
-post-processing workflows which already create data across an ensemble.
+post-processing workflows which aggregate data across an ensemble and stores the
+results outside the realization folders.
+
+SUMO_UPLOAD is implemented both as ERT FORWARD_JOB and ERT WORKFLOW_JOB, and can be
+called from both contexts.
 """
 
 EXAMPLES = """
 In an existing workflow e.g. ``ert/bin/workflows/MY_WORKFLOW`` with the contents::
   MY_JOB <arguments>
-  SUMO_UPLOAD <SCRATCH>/<USER>/<CASE> <SCRATCH>/<USER>/<CASE>/MyIteration/share/results/tables/*.csv
+  SUMO_UPLOAD <CASEPATH> <CASEPATH>/MyIteration/share/results/tables/*.csv <SUMO_ENV>
 ...where ``MY_JOB`` typically refers to a post-processing job creating data.
-Note that ERT workflows have no concept of "iteration", which in practice means you must
-either update the workflow manually or create one per iteration.
+...and where <CASEPATH> typically refers to <SCRATCH>/...
+
+The <SUMO_ENV> variable is typically set in the config as it is used also by forward jobs.
+It must refer to a valid Sumo environment (prod, test, dev). In normal operations, this
+should be set to "prod".
+
+Note that ERT workflows have no concept of the "iteration". In practice this means you must
+for post-processing workflows either update the workflow manually or create one per iteration.
 """  # noqa
 
 
 def main() -> None:
-    """Entry point from command line"""
+    """Entry point from command line (e.g. ERT FORWARD_JOB)."""
 
     # Note for further development:
     # Using subscript/csv_merge.py as inspiration for turning this into something
@@ -102,7 +112,9 @@ def sumo_upload_main(
 
 
 class SumoUpload(ErtScript):
-    """A class with a run() function that can be registered as an ERT plugin"""
+    """A class with a run() function that can be registered as an ERT plugin.
+
+    This is used for the ERT workflow context."""
 
     # pylint: disable=too-few-public-methods
     def run(self, *args):
