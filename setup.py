@@ -8,13 +8,14 @@ setup(
     description="Python package for interacting with Sumo in an FMU setting",
     url="https://github.com/equinor/fmu-sumo",
     version="0.1.2",
-    author="Per Olav Svendsen",
+    author="Equinor",
     license="GPLv3",
     keywords="fmu, sumo",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Natural Language :: English",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
@@ -24,7 +25,9 @@ setup(
             "fmu_sumo_jobs = jobs.hook_implementations.jobs",
             "SumoUpload = fmu.sumo.uploader.scripts.sumo_upload",
         ],
-        "console_scripts": ["sumo_upload=fmu.sumo.uploader.scripts.sumo_upload:main"],
+        "console_scripts": [
+            "sumo_upload=fmu.sumo.uploader.scripts.fm_fmu_uploader:main"
+        ],
     },
     install_requires=[
         "PyYAML",
@@ -33,7 +36,7 @@ setup(
         "setuptools",
         "oneseismic",
     ],
-    python_requires=">=3.4",
+    python_requires=">=3.6",
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,
