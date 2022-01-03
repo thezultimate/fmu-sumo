@@ -1,3 +1,0 @@
--- This is the workflow job run by the HOOK workflow which runs pre-simulation, to register the case on Sumo
-
-EXECUTABLE  ../../../bin/fmu-sumo/scripts/register_case.sh

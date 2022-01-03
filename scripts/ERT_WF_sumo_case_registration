@@ -1,3 +1,0 @@
--- This is the HOOK workflow which runs pre-simulation, to register the case on Sumo
-
-ERT_WFJ_SUMO_CASE_REGISTRATION <SUMO_VIRTUAL_ENV> <CONFIG_PATH>/../../bin/fmu-sumo/scripts/register_case.py <CASE_METADATA> <SUMO_ENVIRONMENT>
