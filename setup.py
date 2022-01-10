@@ -22,7 +22,7 @@ setup(
     entry_points={
         "ert": [
             "fmu_sumo_jobs = jobs.hook_implementations.jobs",
-            "SumoUpload = fmu.sumo.uploader.scripts.sumo_upload",
+            "sumo_upload = fmu.sumo.uploader.scripts.sumo_upload",
         ],
         "console_scripts": ["sumo_upload=fmu.sumo.uploader.scripts.sumo_upload:main"],
     },
