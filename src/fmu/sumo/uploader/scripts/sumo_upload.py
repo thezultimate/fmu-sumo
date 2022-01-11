@@ -78,7 +78,7 @@ def main() -> None:
 
 def sumo_upload_main(
     casepath: str, searchpath: str, env: str, metadata_path: str, threads: int
-):
+) -> None:
     """A "main" function that can be used both from command line and from ERT workflow"""
 
     logger.debug("Running fmu_uploader_main()")
