@@ -267,7 +267,7 @@ class FileOnDisk:
             except OSError as err:
                 logging.info(f"Upload failed: {err}")
                 result["status"] = "failed"
-                self._delete_metadata(self.sumo_object_id, self.sumo_object_id)
+                self._delete_metadata(sumo_connection, self.sumo_object_id)
                 return result
             except TransientError as err:
                 result["status"] = "failed"
@@ -276,12 +276,12 @@ class FileOnDisk:
             except AuthenticationError as err:
                 logging.info(f"Upload failed: {upload_response['text']}")
                 result["status"] = "rejected"
-                self._delete_metadata(self.sumo_object_id, self.sumo_object_id)
+                self._delete_metadata(sumo_connection, self.sumo_object_id)
                 return result
             except PermanentError as err:
                 logging.info(f"Upload failed: {upload_response['text']}")
                 result["status"] = "rejected"
-                self._delete_metadata(self.sumo_object_id, self.sumo_object_id)
+                self._delete_metadata(sumo_connection, self.sumo_object_id)
                 return result
 
             break
@@ -289,7 +289,7 @@ class FileOnDisk:
         if upload_response["status_code"] not in [200, 201]:
             logging.info(f"Upload failed: {upload_response['text']}")
             result["status"] = "failed"
-            self._delete_metadata(self.sumo_object_id, self.sumo_object_id)
+            self._delete_metadata(sumo_connection, self.sumo_object_id)
         else:
             result["status"] = "ok"
         return result
