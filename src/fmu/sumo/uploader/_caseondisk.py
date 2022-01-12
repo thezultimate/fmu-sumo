@@ -221,7 +221,6 @@ class CaseOnDisk:
         logger.debug("files_to_upload: %s", files_to_upload)
 
         while files_to_upload and attempts < max_attempts:
-            logger.debug("attempts/max_attempts: %s/%s", attempts, max_attempts)
             upload_results = upload_files(
                 files=files_to_upload,
                 sumo_parent_id=self.sumo_parent_id,
@@ -247,7 +246,7 @@ class CaseOnDisk:
                 )
             )
 
-        if files_to_upload:
+        if failed_uploads:
             warnings.warn("Stopping after {} attempts".format(attempts))
 
         _dt = time.perf_counter() - _t0
