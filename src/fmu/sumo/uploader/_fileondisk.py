@@ -95,6 +95,7 @@ class FileOnDisk:
             self.metadata["_sumo"]["blob_size"] = 0
             self.manifest = json.loads(scan.main([self.path]))
             self.metadata["_sumo"]["blob_sha256"] = self.manifest["guid"]
+            self.byte_string = None
 
         else:
             self.byte_string = file_to_byte_string(path)
@@ -111,7 +112,8 @@ class FileOnDisk:
         s = f"\n# {self.__class__}"
         s += f"\n# Disk path: {self.path}"
         s += f"\n# Basename: {self.basename}"
-        s += f"\n# Byte string length: {len(self.byte_string)}"
+        if self.byte_string is not None:
+            s += f"\n# Byte string length: {len(self.byte_string)}"
 
         if self.sumo_object_id is None:
             s += "\n# Not uploaded to Sumo"
