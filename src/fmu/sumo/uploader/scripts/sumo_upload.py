@@ -168,10 +168,8 @@ def check_arguments(args) -> None:
     logger.debug("Running check_arguments()")
     logger.debug("Arguments are: %s", str(vars(args)))
 
-    if args.env not in ["dev", "test", "prod", "exp", "preview"]:
-        raise ValueError(
-            f"Illegal environment: {args.env}. Valid environments: dev, test, prod, exp, preview"
-        )
+    if args.env not in ["dev", "test", "prod", "localhost"]:
+        warnings.warn(f"Non-standard environment: {args.env}")
 
     if not Path(args.casepath).is_absolute():
         if args.casepath.startswith("<") and args.casepath.endswith(">"):
