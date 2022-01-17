@@ -21,7 +21,10 @@ setup(
     ],
     author_email="peesv@equinor.com",
     entry_points={
-        "ert": ["sumo_upload = fmu.sumo.uploader.scripts.sumo_upload"],
+        "ert": [
+            "fmu_sumo_jobs = jobs.hook_implementations.jobs",
+            "sumo_upload = fmu.sumo.uploader.scripts.sumo_upload",
+        ],
         "console_scripts": ["sumo_upload=fmu.sumo.uploader.scripts.sumo_upload:main"],
     },
     install_requires=[
