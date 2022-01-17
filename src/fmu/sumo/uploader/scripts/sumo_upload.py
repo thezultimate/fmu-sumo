@@ -87,9 +87,19 @@ def sumo_upload_main(
     logger.info("Case-relative metadata path is %s", metadata_path)
     case_metadata_path = Path(casepath) / Path(metadata_path)
     logger.info("case_metadata_path is %s", case_metadata_path)
-    e = uploader.CaseOnDisk(
-        case_metadata_path=case_metadata_path, sumo_connection=sumo_connection
-    )
+
+    # Catch-all to ensure FMU workflow keeps running even if something happens.
+    # This should be a temporary solution to be re-evaluated in the future.
+
+    try:
+        e = uploader.CaseOnDisk(
+            case_metadata_path=case_metadata_path, sumo_connection=sumo_connection
+        )
+    except Exception as err:
+        logger.info(
+            "Encountered a problem connecting to Sumo. " "The error was: " f"{err}"
+        )
+        return
 
     # add files to the case on disk object
     logger.info("Adding files. Search path is %s", searchpath)
