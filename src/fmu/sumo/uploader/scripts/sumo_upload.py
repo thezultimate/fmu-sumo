@@ -195,7 +195,3 @@ def legacy_ertscript_workflow(config):
     workflow.description = DESCRIPTION
     workflow.examples = EXAMPLES
     workflow.category = "export"
-
-
-if __name__ == "__main__":
-    main()
