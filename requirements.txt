@@ -4,4 +4,4 @@ setuptools~=49.2.1
 pytest~=6.1.1
 sumo-wrapper-python
 oneseismic
-ert
+azure-core
