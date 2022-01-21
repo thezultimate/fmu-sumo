@@ -29,6 +29,9 @@ from azure.core.exceptions import ResourceExistsError
 
 # pylint: disable=C0103 # allow non-snake case variable names
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.CRITICAL)
+
 
 def path_to_yaml_path(path):
     """
@@ -149,6 +152,8 @@ class FileOnDisk:
     def upload_to_sumo(self, sumo_parent_id, sumo_connection):
         """Upload this file to Sumo"""
 
+        logger.debug("Starting upload_to_sumo()")
+
         if not sumo_parent_id:
             raise ValueError(
                 f"Upload failed, sumo_parent_id passed to upload_to_sumo: {sumo_parent_id}"
@@ -162,6 +167,7 @@ class FileOnDisk:
         backoff = [1, 3, 9]
 
         for i in backoff:
+            logger.debug("backoff in outer loop is %s", str(i))
 
             try:
 
@@ -184,6 +190,7 @@ class FileOnDisk:
                 result["metadata_file_size"] = self.size
 
             except TransientError as err:
+                logger.debug("TransientError on blob upload. Sleeping %s", str(i))
                 result["status"] = "failed"
                 result["metadata_upload_response_status_code"] = err.code
                 result["metadata_upload_response_text"] = err.message
@@ -216,6 +223,7 @@ class FileOnDisk:
         _t0_blob = time.perf_counter()
         upload_response = {}
         for i in backoff:
+            logger.debug("backoff in inner loop is %s", str(i))
             try:
                 # if self.metadata["class"] == "seismic":
                 if self.metadata["data"]["format"] == "segy":
@@ -265,21 +273,22 @@ class FileOnDisk:
                 result["blob_upload_time_elapsed"] = _t1_blob - _t0_blob
 
             except OSError as err:
-                logging.info(f"Upload failed: {err}")
+                logger.debug("Upload failed: %s", str(err))
                 result["status"] = "failed"
                 self._delete_metadata(sumo_connection, self.sumo_object_id)
                 return result
             except TransientError as err:
+                logger.debug("Got TransientError. Sleeping for %i seconds", str(i))
                 result["status"] = "failed"
                 time.sleep(i)
                 continue
             except AuthenticationError as err:
-                logging.info(f"Upload failed: {upload_response['text']}")
+                logger.debug("Upload failed: %s", upload_response["text"])
                 result["status"] = "rejected"
                 self._delete_metadata(sumo_connection, self.sumo_object_id)
                 return result
             except PermanentError as err:
-                logging.info(f"Upload failed: {upload_response['text']}")
+                logger.debug("Upload failed: %s", upload_response["text"])
                 result["status"] = "rejected"
                 self._delete_metadata(sumo_connection, self.sumo_object_id)
                 return result
@@ -287,7 +296,7 @@ class FileOnDisk:
             break
 
         if upload_response["status_code"] not in [200, 201]:
-            logging.info(f"Upload failed: {upload_response['text']}")
+            logger.debug("Upload failed: %s", upload_response["text"])
             result["status"] = "failed"
             self._delete_metadata(sumo_connection, self.sumo_object_id)
         else:
